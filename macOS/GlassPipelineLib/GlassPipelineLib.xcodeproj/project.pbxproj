@@ -1,0 +1,524 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E5C5BD9D299C3DB700AAB593 /* SURF.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD92299C3DB700AAB593 /* SURF.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BD9E299C3DB700AAB593 /* homography.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD93299C3DB700AAB593 /* homography.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BD9F299C3DB700AAB593 /* CameraCalibration.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD94299C3DB700AAB593 /* CameraCalibration.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA0299C3DB700AAB593 /* demosaic.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD95299C3DB700AAB593 /* demosaic.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA1299C3DB700AAB593 /* feature2d.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD96299C3DB700AAB593 /* feature2d.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA2299C3DB700AAB593 /* pyramid_processor.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD97299C3DB700AAB593 /* pyramid_processor.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA3299C3DB700AAB593 /* demosaic_cl.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD98299C3DB700AAB593 /* demosaic_cl.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA4299C3DB700AAB593 /* RANSAC.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD99299C3DB700AAB593 /* RANSAC.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA5299C3DB700AAB593 /* SVD.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD9A299C3DB700AAB593 /* SVD.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA6299C3DB700AAB593 /* ThreadPool.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD9B299C3DB700AAB593 /* ThreadPool.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDA7299C3DB700AAB593 /* raw_converter.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BD9C299C3DB700AAB593 /* raw_converter.hpp */; settings = {ATTRIBUTES = (Public, ); }; };
+		E5C5BDB7299C3DC900AAB593 /* homography.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDA8299C3DC900AAB593 /* homography.cpp */; };
+		E5C5BDB8299C3DC900AAB593 /* pyramid_processor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDA9299C3DC900AAB593 /* pyramid_processor.cpp */; };
+		E5C5BDB9299C3DC900AAB593 /* demosaic_cl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAA299C3DC900AAB593 /* demosaic_cl.cpp */; };
+		E5C5BDBA299C3DC900AAB593 /* IMX571Calibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAB299C3DC900AAB593 /* IMX571Calibration.cpp */; };
+		E5C5BDBB299C3DC900AAB593 /* iPhone11Calibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAC299C3DC900AAB593 /* iPhone11Calibration.cpp */; };
+		E5C5BDBC299C3DC900AAB593 /* RicohGRIIICalibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAD299C3DC900AAB593 /* RicohGRIIICalibration.cpp */; };
+		E5C5BDBD299C3DC900AAB593 /* demosaic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAE299C3DC900AAB593 /* demosaic.cpp */; };
+		E5C5BDBE299C3DC900AAB593 /* SURF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDAF299C3DC900AAB593 /* SURF.cpp */; };
+		E5C5BDBF299C3DC900AAB593 /* LeicaQ2Calibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB0299C3DC900AAB593 /* LeicaQ2Calibration.cpp */; };
+		E5C5BDC0299C3DC900AAB593 /* Sonya6400Calibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB1299C3DC900AAB593 /* Sonya6400Calibration.cpp */; };
+		E5C5BDC1299C3DC900AAB593 /* raw_converter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB2299C3DC900AAB593 /* raw_converter.cpp */; };
+		E5C5BDC2299C3DC900AAB593 /* ThreadPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB3299C3DC900AAB593 /* ThreadPool.cpp */; };
+		E5C5BDC3299C3DC900AAB593 /* demosaic_cpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB4299C3DC900AAB593 /* demosaic_cpu.cpp */; };
+		E5C5BDC4299C3DC900AAB593 /* CanonEOSRPCalibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */; };
+		E5C5BDC5299C3DC900AAB593 /* RANSAC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDB6299C3DC900AAB593 /* RANSAC.cpp */; };
+		E5C5BDC7299C3F1600AAB593 /* libGlassImageLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E58337F0299C3668007192AD /* libGlassImageLib.dylib */; };
+		E5C5BDC9299C3F2500AAB593 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDC8299C3F2500AAB593 /* OpenCL.framework */; };
+		E5C5BDD3299C405800AAB593 /* demosaic_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */; };
+		E5C5BE02299C45CA00AAB593 /* OpenCL in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE01299C45CA00AAB593 /* OpenCL */; };
+		E5C5BE04299C45DC00AAB593 /* Assets in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE03299C45DC00AAB593 /* Assets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E58337EF299C3668007192AD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E583372F299C1899007192AD;
+			remoteInfo = GlassImageLib;
+		};
+		E58337F1299C3676007192AD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = E583372E299C1899007192AD;
+			remoteInfo = GlassImageLib;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E5C5BDFE299C44DA00AAB593 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 16;
+			files = (
+				E5C5BE04299C45DC00AAB593 /* Assets in CopyFiles */,
+				E5C5BE02299C45CA00AAB593 /* OpenCL in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E58337DD299C3637007192AD /* libGlassPipelineLib.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = libGlassPipelineLib.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = ../../GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<group>"; };
+		E5C5BD92299C3DB700AAB593 /* SURF.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SURF.hpp; path = ../../include/SURF.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD93299C3DB700AAB593 /* homography.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = homography.hpp; path = ../../include/homography.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD94299C3DB700AAB593 /* CameraCalibration.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = CameraCalibration.hpp; path = ../../include/CameraCalibration.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD95299C3DB700AAB593 /* demosaic.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = demosaic.hpp; path = ../../include/demosaic.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD96299C3DB700AAB593 /* feature2d.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = feature2d.hpp; path = ../../include/feature2d.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD97299C3DB700AAB593 /* pyramid_processor.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = pyramid_processor.hpp; path = ../../include/pyramid_processor.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD98299C3DB700AAB593 /* demosaic_cl.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = demosaic_cl.hpp; path = ../../include/demosaic_cl.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD99299C3DB700AAB593 /* RANSAC.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = RANSAC.hpp; path = ../../include/RANSAC.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD9A299C3DB700AAB593 /* SVD.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = SVD.hpp; path = ../../include/SVD.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD9B299C3DB700AAB593 /* ThreadPool.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = ThreadPool.hpp; path = ../../include/ThreadPool.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BD9C299C3DB700AAB593 /* raw_converter.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = raw_converter.hpp; path = ../../include/raw_converter.hpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDA8299C3DC900AAB593 /* homography.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = homography.cpp; path = ../../src/homography.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDA9299C3DC900AAB593 /* pyramid_processor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = pyramid_processor.cpp; path = ../../src/pyramid_processor.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAA299C3DC900AAB593 /* demosaic_cl.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = demosaic_cl.cpp; path = ../../src/demosaic_cl.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAB299C3DC900AAB593 /* IMX571Calibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = IMX571Calibration.cpp; path = ../../src/IMX571Calibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAC299C3DC900AAB593 /* iPhone11Calibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = iPhone11Calibration.cpp; path = ../../src/iPhone11Calibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAD299C3DC900AAB593 /* RicohGRIIICalibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RicohGRIIICalibration.cpp; path = ../../src/RicohGRIIICalibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAE299C3DC900AAB593 /* demosaic.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = demosaic.cpp; path = ../../src/demosaic.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDAF299C3DC900AAB593 /* SURF.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = SURF.cpp; path = ../../src/SURF.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB0299C3DC900AAB593 /* LeicaQ2Calibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = LeicaQ2Calibration.cpp; path = ../../src/LeicaQ2Calibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB1299C3DC900AAB593 /* Sonya6400Calibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = Sonya6400Calibration.cpp; path = ../../src/Sonya6400Calibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB2299C3DC900AAB593 /* raw_converter.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = raw_converter.cpp; path = ../../src/raw_converter.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB3299C3DC900AAB593 /* ThreadPool.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = ThreadPool.cpp; path = ../../src/ThreadPool.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB4299C3DC900AAB593 /* demosaic_cpu.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = demosaic_cpu.cpp; path = ../../src/demosaic_cpu.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CanonEOSRPCalibration.cpp; path = ../../src/CanonEOSRPCalibration.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDB6299C3DC900AAB593 /* RANSAC.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = RANSAC.cpp; path = ../../src/RANSAC.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BDC8299C3F2500AAB593 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
+		E5C5BDCA299C3FCC00AAB593 /* libjpeg.8.2.2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libjpeg.8.2.2.dylib; path = "../../../../../../opt/homebrew/Cellar/jpeg-turbo/2.1.4/lib/libjpeg.8.2.2.dylib"; sourceTree = "<group>"; };
+		E5C5BDCB299C3FCC00AAB593 /* libpng16.16.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libpng16.16.dylib; path = ../../../../../../opt/homebrew/Cellar/libpng/1.6.39/lib/libpng16.16.dylib; sourceTree = "<group>"; };
+		E5C5BDCC299C3FCC00AAB593 /* libz.1.2.13.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.1.2.13.dylib; path = ../../../../../../opt/homebrew/Cellar/zlib/1.2.13/lib/libz.1.2.13.dylib; sourceTree = "<group>"; };
+		E5C5BDCD299C3FCC00AAB593 /* libtiff.5.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libtiff.5.dylib; path = ../../../../../../opt/homebrew/Cellar/libtiff/4.4.0_1/lib/libtiff.5.dylib; sourceTree = "<group>"; };
+		E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = demosaic_utils.cpp; path = ../../src/demosaic_utils.cpp; sourceTree = SOURCE_ROOT; };
+		E5C5BE01299C45CA00AAB593 /* OpenCL */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenCL; path = ../../src/OpenCL; sourceTree = "<group>"; };
+		E5C5BE03299C45DC00AAB593 /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets; path = ../../Assets; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E58337DB299C3637007192AD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C5BDC9299C3F2500AAB593 /* OpenCL.framework in Frameworks */,
+				E5C5BDC7299C3F1600AAB593 /* libGlassImageLib.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E58337D4299C3637007192AD = {
+			isa = PBXGroup;
+			children = (
+				E5C5BE03299C45DC00AAB593 /* Assets */,
+				E5C5BE01299C45CA00AAB593 /* OpenCL */,
+				E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */,
+				E5C5BDAA299C3DC900AAB593 /* demosaic_cl.cpp */,
+				E5C5BDB4299C3DC900AAB593 /* demosaic_cpu.cpp */,
+				E5C5BDAE299C3DC900AAB593 /* demosaic.cpp */,
+				E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */,
+				E5C5BDA8299C3DC900AAB593 /* homography.cpp */,
+				E5C5BDAB299C3DC900AAB593 /* IMX571Calibration.cpp */,
+				E5C5BDAC299C3DC900AAB593 /* iPhone11Calibration.cpp */,
+				E5C5BDB0299C3DC900AAB593 /* LeicaQ2Calibration.cpp */,
+				E5C5BDA9299C3DC900AAB593 /* pyramid_processor.cpp */,
+				E5C5BDB6299C3DC900AAB593 /* RANSAC.cpp */,
+				E5C5BDB2299C3DC900AAB593 /* raw_converter.cpp */,
+				E5C5BDAD299C3DC900AAB593 /* RicohGRIIICalibration.cpp */,
+				E5C5BDB1299C3DC900AAB593 /* Sonya6400Calibration.cpp */,
+				E5C5BDAF299C3DC900AAB593 /* SURF.cpp */,
+				E5C5BDB3299C3DC900AAB593 /* ThreadPool.cpp */,
+				E5C5BD94299C3DB700AAB593 /* CameraCalibration.hpp */,
+				E5C5BD98299C3DB700AAB593 /* demosaic_cl.hpp */,
+				E5C5BD95299C3DB700AAB593 /* demosaic.hpp */,
+				E5C5BD96299C3DB700AAB593 /* feature2d.hpp */,
+				E5C5BD93299C3DB700AAB593 /* homography.hpp */,
+				E5C5BD97299C3DB700AAB593 /* pyramid_processor.hpp */,
+				E5C5BD99299C3DB700AAB593 /* RANSAC.hpp */,
+				E5C5BD9C299C3DB700AAB593 /* raw_converter.hpp */,
+				E5C5BD92299C3DB700AAB593 /* SURF.hpp */,
+				E5C5BD9A299C3DB700AAB593 /* SVD.hpp */,
+				E5C5BD9B299C3DB700AAB593 /* ThreadPool.hpp */,
+				E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */,
+				E58337DF299C3637007192AD /* GlassPipelineLib */,
+				E58337DE299C3637007192AD /* Products */,
+				E5C5BDC6299C3F1600AAB593 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E58337DE299C3637007192AD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E58337DD299C3637007192AD /* libGlassPipelineLib.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E58337DF299C3637007192AD /* GlassPipelineLib */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = GlassPipelineLib;
+			sourceTree = "<group>";
+		};
+		E58337EC299C3668007192AD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E58337F0299C3668007192AD /* libGlassImageLib.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E5C5BDC6299C3F1600AAB593 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDCA299C3FCC00AAB593 /* libjpeg.8.2.2.dylib */,
+				E5C5BDCB299C3FCC00AAB593 /* libpng16.16.dylib */,
+				E5C5BDCD299C3FCC00AAB593 /* libtiff.5.dylib */,
+				E5C5BDCC299C3FCC00AAB593 /* libz.1.2.13.dylib */,
+				E5C5BDC8299C3F2500AAB593 /* OpenCL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		E58337D9299C3637007192AD /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C5BD9D299C3DB700AAB593 /* SURF.hpp in Headers */,
+				E5C5BD9E299C3DB700AAB593 /* homography.hpp in Headers */,
+				E5C5BD9F299C3DB700AAB593 /* CameraCalibration.hpp in Headers */,
+				E5C5BDA0299C3DB700AAB593 /* demosaic.hpp in Headers */,
+				E5C5BDA1299C3DB700AAB593 /* feature2d.hpp in Headers */,
+				E5C5BDA2299C3DB700AAB593 /* pyramid_processor.hpp in Headers */,
+				E5C5BDA3299C3DB700AAB593 /* demosaic_cl.hpp in Headers */,
+				E5C5BDA4299C3DB700AAB593 /* RANSAC.hpp in Headers */,
+				E5C5BDA5299C3DB700AAB593 /* SVD.hpp in Headers */,
+				E5C5BDA6299C3DB700AAB593 /* ThreadPool.hpp in Headers */,
+				E5C5BDA7299C3DB700AAB593 /* raw_converter.hpp in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		E58337DC299C3637007192AD /* GlassPipelineLib */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E58337E8299C3637007192AD /* Build configuration list for PBXNativeTarget "GlassPipelineLib" */;
+			buildPhases = (
+				E58337D9299C3637007192AD /* Headers */,
+				E58337DA299C3637007192AD /* Sources */,
+				E58337DB299C3637007192AD /* Frameworks */,
+				E5C5BDFE299C44DA00AAB593 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E58337F2299C3676007192AD /* PBXTargetDependency */,
+			);
+			name = GlassPipelineLib;
+			productName = GlassPipelineLib;
+			productReference = E58337DD299C3637007192AD /* libGlassPipelineLib.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E58337D5299C3637007192AD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1420;
+				TargetAttributes = {
+					E58337DC299C3637007192AD = {
+						CreatedOnToolsVersion = 14.2;
+					};
+				};
+			};
+			buildConfigurationList = E58337D8299C3637007192AD /* Build configuration list for PBXProject "GlassPipelineLib" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E58337D4299C3637007192AD;
+			productRefGroup = E58337DE299C3637007192AD /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E58337EC299C3668007192AD /* Products */;
+					ProjectRef = E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				E58337DC299C3637007192AD /* GlassPipelineLib */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		E58337F0299C3668007192AD /* libGlassImageLib.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = libGlassImageLib.dylib;
+			remoteRef = E58337EF299C3668007192AD /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E58337DA299C3637007192AD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C5BDB7299C3DC900AAB593 /* homography.cpp in Sources */,
+				E5C5BDB8299C3DC900AAB593 /* pyramid_processor.cpp in Sources */,
+				E5C5BDB9299C3DC900AAB593 /* demosaic_cl.cpp in Sources */,
+				E5C5BDBA299C3DC900AAB593 /* IMX571Calibration.cpp in Sources */,
+				E5C5BDBB299C3DC900AAB593 /* iPhone11Calibration.cpp in Sources */,
+				E5C5BDBC299C3DC900AAB593 /* RicohGRIIICalibration.cpp in Sources */,
+				E5C5BDBD299C3DC900AAB593 /* demosaic.cpp in Sources */,
+				E5C5BDBE299C3DC900AAB593 /* SURF.cpp in Sources */,
+				E5C5BDD3299C405800AAB593 /* demosaic_utils.cpp in Sources */,
+				E5C5BDBF299C3DC900AAB593 /* LeicaQ2Calibration.cpp in Sources */,
+				E5C5BDC0299C3DC900AAB593 /* Sonya6400Calibration.cpp in Sources */,
+				E5C5BDC1299C3DC900AAB593 /* raw_converter.cpp in Sources */,
+				E5C5BDC2299C3DC900AAB593 /* ThreadPool.cpp in Sources */,
+				E5C5BDC3299C3DC900AAB593 /* demosaic_cpu.cpp in Sources */,
+				E5C5BDC4299C3DC900AAB593 /* CanonEOSRPCalibration.cpp in Sources */,
+				E5C5BDC5299C3DC900AAB593 /* RANSAC.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E58337F2299C3676007192AD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = GlassImageLib;
+			targetProxy = E58337F1299C3676007192AD /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E58337E6299C3637007192AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../GlassImage/include\"";
+			};
+			name = Debug;
+		};
+		E58337E7299C3637007192AD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = "\"$(SRCROOT)/../../GlassImage/include\"";
+			};
+			name = Release;
+		};
+		E58337E9299C3637007192AD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4A4DGXV9V7;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/Cellar/jpeg-turbo/2.1.4/lib",
+					/opt/homebrew/Cellar/libpng/1.6.39/lib,
+					/opt/homebrew/Cellar/zlib/1.2.13/lib,
+					/opt/homebrew/Cellar/libtiff/4.4.0_1/lib,
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+					"\"$(SRCROOT)/../../include\"",
+					/usr/local/include,
+					/opt/homebrew/include,
+				);
+			};
+			name = Debug;
+		};
+		E58337EA299C3637007192AD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4A4DGXV9V7;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				EXECUTABLE_PREFIX = lib;
+				GCC_ENABLE_CPP_EXCEPTIONS = YES;
+				GCC_ENABLE_CPP_RTTI = YES;
+				GCC_SYMBOLS_PRIVATE_EXTERN = YES;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"/opt/homebrew/Cellar/jpeg-turbo/2.1.4/lib",
+					/opt/homebrew/Cellar/libpng/1.6.39/lib,
+					/opt/homebrew/Cellar/zlib/1.2.13/lib,
+					/opt/homebrew/Cellar/libtiff/4.4.0_1/lib,
+				);
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+					"\"$(SRCROOT)/../../include\"",
+					/usr/local/include,
+					/opt/homebrew/include,
+				);
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E58337D8299C3637007192AD /* Build configuration list for PBXProject "GlassPipelineLib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E58337E6299C3637007192AD /* Debug */,
+				E58337E7299C3637007192AD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E58337E8299C3637007192AD /* Build configuration list for PBXNativeTarget "GlassPipelineLib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E58337E9299C3637007192AD /* Debug */,
+				E58337EA299C3637007192AD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E58337D5299C3637007192AD /* Project object */;
+}

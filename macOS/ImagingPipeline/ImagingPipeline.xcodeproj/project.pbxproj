@@ -1,0 +1,411 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		E5C5BDE1299C419200AAB593 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDE0299C419200AAB593 /* main.cpp */; };
+		E5C5BDFA299C44BA00AAB593 /* libGlassImageLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */; };
+		E5C5BDFB299C44BA00AAB593 /* libGlassPipelineLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDED299C43BE00AAB593 /* libGlassPipelineLib.dylib */; };
+		E5C5BDFD299C44C600AAB593 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDFC299C44C600AAB593 /* OpenCL.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E5C5BDEC299C43BE00AAB593 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E58337DD299C3637007192AD;
+			remoteInfo = GlassPipelineLib;
+		};
+		E5C5BDF1299C43D400AAB593 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = E58337DC299C3637007192AD;
+			remoteInfo = GlassPipelineLib;
+		};
+		E5C5BDF3299C43D400AAB593 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = E583372E299C1899007192AD;
+			remoteInfo = GlassImageLib;
+		};
+		E5C5BDF6299C43D400AAB593 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E583372F299C1899007192AD;
+			remoteInfo = GlassImageLib;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		E5C5BDDB299C419200AAB593 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		E5C5BDDD299C419200AAB593 /* ImagingPipeline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ImagingPipeline; sourceTree = BUILT_PRODUCTS_DIR; };
+		E5C5BDE0299C419200AAB593 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassPipelineLib.xcodeproj; path = ../GlassPipelineLib/GlassPipelineLib.xcodeproj; sourceTree = "<group>"; };
+		E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = /Users/fabio/work/GlassPipeline/GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<absolute>"; };
+		E5C5BDF8299C43EA00AAB593 /* ImagingPipeline.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ImagingPipeline.entitlements; sourceTree = "<group>"; };
+		E5C5BDFC299C44C600AAB593 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		E5C5BDDA299C419200AAB593 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C5BDFD299C44C600AAB593 /* OpenCL.framework in Frameworks */,
+				E5C5BDFA299C44BA00AAB593 /* libGlassImageLib.dylib in Frameworks */,
+				E5C5BDFB299C44BA00AAB593 /* libGlassPipelineLib.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		E5C5BDD4299C419200AAB593 = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */,
+				E5C5BDDF299C419200AAB593 /* ImagingPipeline */,
+				E5C5BDDE299C419200AAB593 /* Products */,
+				E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */,
+				E5C5BDF9299C44BA00AAB593 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		E5C5BDDE299C419200AAB593 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDDD299C419200AAB593 /* ImagingPipeline */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E5C5BDDF299C419200AAB593 /* ImagingPipeline */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDF8299C43EA00AAB593 /* ImagingPipeline.entitlements */,
+				E5C5BDE0299C419200AAB593 /* main.cpp */,
+			);
+			path = ImagingPipeline;
+			sourceTree = "<group>";
+		};
+		E5C5BDE8299C43BE00AAB593 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDED299C43BE00AAB593 /* libGlassPipelineLib.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E5C5BDEF299C43D400AAB593 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		E5C5BDF9299C44BA00AAB593 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BDFC299C44C600AAB593 /* OpenCL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E5C5BDDC299C419200AAB593 /* ImagingPipeline */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E5C5BDE4299C419200AAB593 /* Build configuration list for PBXNativeTarget "ImagingPipeline" */;
+			buildPhases = (
+				E5C5BDD9299C419200AAB593 /* Sources */,
+				E5C5BDDA299C419200AAB593 /* Frameworks */,
+				E5C5BDDB299C419200AAB593 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E5C5BDF2299C43D400AAB593 /* PBXTargetDependency */,
+				E5C5BDF4299C43D400AAB593 /* PBXTargetDependency */,
+			);
+			name = ImagingPipeline;
+			productName = ImagingPipeline;
+			productReference = E5C5BDDD299C419200AAB593 /* ImagingPipeline */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		E5C5BDD5299C419200AAB593 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastUpgradeCheck = 1420;
+				TargetAttributes = {
+					E5C5BDDC299C419200AAB593 = {
+						CreatedOnToolsVersion = 14.2;
+					};
+				};
+			};
+			buildConfigurationList = E5C5BDD8299C419200AAB593 /* Build configuration list for PBXProject "ImagingPipeline" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = E5C5BDD4299C419200AAB593;
+			productRefGroup = E5C5BDDE299C419200AAB593 /* Products */;
+			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = E5C5BDEF299C43D400AAB593 /* Products */;
+					ProjectRef = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
+				},
+				{
+					ProductGroup = E5C5BDE8299C43BE00AAB593 /* Products */;
+					ProjectRef = E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */;
+				},
+			);
+			projectRoot = "";
+			targets = (
+				E5C5BDDC299C419200AAB593 /* ImagingPipeline */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		E5C5BDED299C43BE00AAB593 /* libGlassPipelineLib.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = libGlassPipelineLib.dylib;
+			remoteRef = E5C5BDEC299C43BE00AAB593 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = libGlassImageLib.dylib;
+			remoteRef = E5C5BDF6299C43D400AAB593 /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
+
+/* Begin PBXSourcesBuildPhase section */
+		E5C5BDD9299C419200AAB593 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E5C5BDE1299C419200AAB593 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E5C5BDF2299C43D400AAB593 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = GlassPipelineLib;
+			targetProxy = E5C5BDF1299C43D400AAB593 /* PBXContainerItemProxy */;
+		};
+		E5C5BDF4299C43D400AAB593 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = GlassImageLib;
+			targetProxy = E5C5BDF3299C43D400AAB593 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		E5C5BDE2299C419200AAB593 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include,
+					/usr/local/include,
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+				);
+			};
+			name = Debug;
+		};
+		E5C5BDE3299C419200AAB593 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.1;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include,
+					/usr/local/include,
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+				);
+			};
+			name = Release;
+		};
+		E5C5BDE5299C419200AAB593 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4A4DGXV9V7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		E5C5BDE6299C419200AAB593 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 4A4DGXV9V7;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		E5C5BDD8299C419200AAB593 /* Build configuration list for PBXProject "ImagingPipeline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E5C5BDE2299C419200AAB593 /* Debug */,
+				E5C5BDE3299C419200AAB593 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E5C5BDE4299C419200AAB593 /* Build configuration list for PBXNativeTarget "ImagingPipeline" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E5C5BDE5299C419200AAB593 /* Debug */,
+				E5C5BDE6299C419200AAB593 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = E5C5BDD5299C419200AAB593 /* Project object */;
+}
