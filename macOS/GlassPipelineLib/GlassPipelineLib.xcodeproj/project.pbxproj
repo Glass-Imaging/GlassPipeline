@@ -55,6 +55,13 @@
 			remoteGlobalIDString = E583372E299C1899007192AD;
 			remoteInfo = GlassImageLib;
 		};
+		E5C5BE09299C4B7F00AAB593 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = E583372F299C1899007192AD;
+			remoteInfo = GlassImageLib;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -108,6 +115,7 @@
 		E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = demosaic_utils.cpp; path = ../../src/demosaic_utils.cpp; sourceTree = SOURCE_ROOT; };
 		E5C5BE01299C45CA00AAB593 /* OpenCL */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenCL; path = ../../src/OpenCL; sourceTree = "<group>"; };
 		E5C5BE03299C45DC00AAB593 /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets; path = ../../Assets; sourceTree = "<group>"; };
+		E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = ../../GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -126,6 +134,7 @@
 		E58337D4299C3637007192AD = {
 			isa = PBXGroup;
 			children = (
+				E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */,
 				E5C5BE03299C45DC00AAB593 /* Assets */,
 				E5C5BE01299C45CA00AAB593 /* OpenCL */,
 				E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */,
@@ -195,6 +204,14 @@
 				E5C5BDC8299C3F2500AAB593 /* OpenCL.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		E5C5BE06299C4B7F00AAB593 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				E5C5BE0A299C4B7F00AAB593 /* libGlassImageLib.dylib */,
+			);
+			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -270,6 +287,10 @@
 					ProductGroup = E58337EC299C3668007192AD /* Products */;
 					ProjectRef = E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */;
 				},
+				{
+					ProductGroup = E5C5BE06299C4B7F00AAB593 /* Products */;
+					ProjectRef = E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
@@ -284,6 +305,13 @@
 			fileType = "compiled.mach-o.dylib";
 			path = libGlassImageLib.dylib;
 			remoteRef = E58337EF299C3668007192AD /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		E5C5BE0A299C4B7F00AAB593 /* libGlassImageLib.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = libGlassImageLib.dylib;
+			remoteRef = E5C5BE09299C4B7F00AAB593 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */

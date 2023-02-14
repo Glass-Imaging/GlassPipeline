@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E5C5BDE1299C419200AAB593 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDE0299C419200AAB593 /* main.cpp */; };
+		E5C5BDE1299C419200AAB593 /* ImagingPipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDE0299C419200AAB593 /* ImagingPipeline.cpp */; };
 		E5C5BDFA299C44BA00AAB593 /* libGlassImageLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */; };
 		E5C5BDFB299C44BA00AAB593 /* libGlassPipelineLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDED299C43BE00AAB593 /* libGlassPipelineLib.dylib */; };
 		E5C5BDFD299C44C600AAB593 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDFC299C44C600AAB593 /* OpenCL.framework */; };
@@ -58,7 +58,7 @@
 
 /* Begin PBXFileReference section */
 		E5C5BDDD299C419200AAB593 /* ImagingPipeline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ImagingPipeline; sourceTree = BUILT_PRODUCTS_DIR; };
-		E5C5BDE0299C419200AAB593 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		E5C5BDE0299C419200AAB593 /* ImagingPipeline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImagingPipeline.cpp; sourceTree = "<group>"; };
 		E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassPipelineLib.xcodeproj; path = ../GlassPipelineLib/GlassPipelineLib.xcodeproj; sourceTree = "<group>"; };
 		E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = /Users/fabio/work/GlassPipeline/GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<absolute>"; };
 		E5C5BDF8299C43EA00AAB593 /* ImagingPipeline.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ImagingPipeline.entitlements; sourceTree = "<group>"; };
@@ -82,10 +82,10 @@
 		E5C5BDD4299C419200AAB593 = {
 			isa = PBXGroup;
 			children = (
+				E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */,
 				E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */,
 				E5C5BDDF299C419200AAB593 /* ImagingPipeline */,
 				E5C5BDDE299C419200AAB593 /* Products */,
-				E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */,
 				E5C5BDF9299C44BA00AAB593 /* Frameworks */,
 			);
 			sourceTree = "<group>";
@@ -102,7 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				E5C5BDF8299C43EA00AAB593 /* ImagingPipeline.entitlements */,
-				E5C5BDE0299C419200AAB593 /* main.cpp */,
+				E5C5BDE0299C419200AAB593 /* ImagingPipeline.cpp */,
 			);
 			path = ImagingPipeline;
 			sourceTree = "<group>";
@@ -217,7 +217,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E5C5BDE1299C419200AAB593 /* main.cpp in Sources */,
+				E5C5BDE1299C419200AAB593 /* ImagingPipeline.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
