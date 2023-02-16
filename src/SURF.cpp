@@ -1254,8 +1254,13 @@ static inline float L2Norm(const float* p1, const float* p2, int n) {
     return sqrtf(sum);
 }
 
-double timeDiff(std::chrono::steady_clock::time_point t_start,
-                std::chrono::steady_clock::time_point t_end) {
+#ifdef __APPLE__
+typedef std::chrono::steady_clock::time_point time_point;
+#else
+typedef std::chrono::system_clock::time_point time_point;
+#endif
+
+double timeDiff(time_point t_start, time_point t_end) {
     return std::chrono::duration<double, std::milli>(t_end-t_start).count();
 }
 
