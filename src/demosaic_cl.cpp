@@ -630,7 +630,7 @@ void despeckleRawRGBAImage(gls::OpenCLContext* glsContext,
            inputImage.getImage2D(), { rawVariance[0], rawVariance[1], rawVariance[2], rawVariance[3] }, outputImage->getImage2D());
 }
 
-std::vector<std::tuple<float, float, float>> gaussianKernelBilinearWeights(float radius) {
+std::vector<std::array<float, 3>> gaussianKernelBilinearWeights(float radius) {
     int kernelSize = (int) (ceil(2 * radius));
     if ((kernelSize % 2) == 0) {
         kernelSize++;
@@ -650,7 +650,7 @@ std::vector<std::tuple<float, float, float>> gaussianKernelBilinearWeights(float
 
     const int outWidth = kernelSize / 2 + 1;
     const int weightsCount = outWidth * outWidth;
-    std::vector<std::tuple<float, float, float>> weightsOut(weightsCount);
+    std::vector<std::array<float, 3>> weightsOut(weightsCount);
     KernelOptimizeBilinear2d(kernelSize, weights, &weightsOut);
 
     std::cout << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;

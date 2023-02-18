@@ -1031,7 +1031,7 @@ gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage, 
 // From https://john-chapman.github.io/2019/03/29/convolution.html
 
 void KernelOptimizeBilinear2d(int width, const std::vector<float>& weightsIn,
-                              std::vector<std::tuple</* w */ float, /* x */ float, /* y */ float>>* weightsOut) {
+                              std::vector<std::array<float, 3>>* weightsOut) {
     const int outWidth = width / 2 + 1;
     const int halfWidth = width / 2;
 
@@ -1080,5 +1080,5 @@ void KernelOptimizeBilinear2d(int width, const std::vector<float>& weightsIn,
     }
 
     const int k = (row / 2) * outWidth + (col / 2);
-    (*weightsOut)[k] = {weightsIn[(row * width) + col], width / 2, width / 2};
+    (*weightsOut)[k] = {weightsIn[(row * width) + col], width / 2.0f, width / 2.0f};
 }

@@ -266,7 +266,7 @@ gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage, 
                                 float* highlights = nullptr);
 
 void KernelOptimizeBilinear2d(int width, const std::vector<float>& weightsIn,
-                              std::vector<std::tuple</* w */ float, /* x */ float, /* y */ float>>* weightsOut);
+                              std::vector<std::array<float, 3>>* weightsOut);
 
 RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage, gls::Matrix<3, 3>* cam_xyz, gls::Vector<3>* pre_mul,
                              float black_level, float white_level, BayerPattern bayerPattern, const gls::rectangle& gmb_position, bool rotate_180);
