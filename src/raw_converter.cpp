@@ -120,7 +120,8 @@ std::array<gls::Vector<2>, 3> getRawVariance(const RawNLF& rawNLF) {
     return { redVariance, greenVariance, blueVariance };
 }
 
-void dumpGradientImage(const gls::cl_image_2d<gls::luma_alpha_pixel_float>& image) {
+template<typename T>
+void dumpGradientImage(const gls::cl_image_2d<T>& image) {
     gls::image<gls::rgb_pixel> out(image.width, image.height);
     const auto image_cpu = image.mapImage();
     out.apply([&](gls::rgb_pixel* p, int x, int y) {
@@ -140,7 +141,7 @@ void dumpGradientImage(const gls::cl_image_2d<gls::luma_alpha_pixel_float>& imag
         };
     });
     image.unmapImage(image_cpu);
-    static int count = 1;
+    static int count = 0;
     out.write_png_file("/Users/fabio/raw_gradient_sgn_5_fine_" + std::to_string(count++) + ".png");
 }
 
@@ -162,12 +163,15 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
                  demosaicParameters->scale_mul,
                  demosaicParameters->black_level / 0xffff);
 
+    rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
+    // dumpGradientImage(*clRawSobelImage);
+
     NoiseModel<5>* noiseModel = &demosaicParameters->noiseModel;
 
     LOG_INFO(TAG) << "NoiseLevel: " << demosaicParameters->noiseLevel << std::endl;
 
     if (calibrateFromImage) {
-        noiseModel->rawNlf = MeasureRawNLF(_glsContext, *clScaledRawImage,
+        noiseModel->rawNlf = MeasureRawNLF(_glsContext, *clScaledRawImage, *clRawSobelImage,
                                            demosaicParameters->exposure_multiplier,
                                            demosaicParameters->bayerPattern);
     }
@@ -192,7 +196,6 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
         rawRGBAToBayer(_glsContext, *denoisedRgbaRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern);
     }
 
-    rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
     gaussianBlurSobelImage(_glsContext, *clScaledRawImage, *clRawSobelImage, rawVariance[1], 1.5, 4.5, clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 

@@ -23,6 +23,8 @@
 #include "gls_cl.hpp"
 #include "gls_cl_image.hpp"
 
+#include "gls_statistics.hpp"
+
 /*
  OpenCL RAW Image Demosaic.
  NOTE: This code can throw exceptions, to facilitate debugging no exception handler is provided, so things can crash in place.
@@ -202,10 +204,13 @@ void fasteDebayer(gls::OpenCLContext* glsContext,
 void rawNoiseStatistics(gls::OpenCLContext* glsContext,
                         const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                         BayerPattern bayerPattern,
+                        const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
                         gls::cl_image_2d<gls::rgba_pixel_float>* meanImage,
-                        gls::cl_image_2d<gls::rgba_pixel_float>* varImage) {
+                        gls::cl_image_2d<gls::rgba_pixel_float>* varImage,
+                        gls::cl_image_2d<gls::rgba_pixel_float>* kurtImage) {
     assert(rawImage.width == 2 * meanImage->width && rawImage.height == 2 * meanImage->height);
     assert(varImage->width == meanImage->width && varImage->height == meanImage->height);
+    assert(kurtImage->width == meanImage->width && kurtImage->height == meanImage->height);
 
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
@@ -213,13 +218,19 @@ void rawNoiseStatistics(gls::OpenCLContext* glsContext,
     // Bind the kernel parameters
     auto kernel = cl::KernelFunctor<cl::Image2D,  // rawImage
                                     int,          // bayerPattern
+                                    cl::Image2D,  // sobelImage
                                     cl::Image2D,  // meanImage
-                                    cl::Image2D   // varImage
+                                    cl::Image2D,  // varImage
+                                    cl::Image2D   // kurtImage
                                     >(program, "rawNoiseStatistics");
 
     // Schedule the kernel on the GPU
     kernel(gls::OpenCLContext::buildEnqueueArgs(meanImage->width, meanImage->height),
-           rawImage.getImage2D(), bayerPattern, meanImage->getImage2D(), varImage->getImage2D());
+           rawImage.getImage2D(), bayerPattern,
+           sobelImage.getImage2D(),
+           meanImage->getImage2D(),
+           varImage->getImage2D(),
+           kurtImage->getImage2D());
 }
 
 template <typename T1, typename T2>
@@ -642,21 +653,21 @@ std::vector<std::array<float, 3>> gaussianKernelBilinearWeights(float radius) {
             weights[i] = exp(-((float)(x * x + y * y) / (2 * radius * radius)));
         }
     }
-    std::cout << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
-    for (const auto& w : weights) {
-        std::cout << std::setprecision(4) << std::scientific << w << ", ";
-    }
-    std::cout << std::endl;
+//    std::cout << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
+//    for (const auto& w : weights) {
+//        std::cout << std::setprecision(4) << std::scientific << w << ", ";
+//    }
+//    std::cout << std::endl;
 
     const int outWidth = kernelSize / 2 + 1;
     const int weightsCount = outWidth * outWidth;
     std::vector<std::array<float, 3>> weightsOut(weightsCount);
     KernelOptimizeBilinear2d(kernelSize, weights, &weightsOut);
 
-    std::cout << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
-    for (const auto& [w, x, y] : weightsOut) {
-        std::cout << w << " @ (" << x << " : " << y << "), " << std::endl;
-    }
+//    std::cout << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
+//    for (const auto& [w, x, y] : weightsOut) {
+//        std::cout << w << " @ (" << x << " : " << y << "), " << std::endl;
+//    }
 
     return weightsOut;
 }
@@ -786,8 +797,10 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     applyKernel(glsContext, "noiseStatistics", image, &noiseStats);
     const auto noiseStatsCpu = noiseStats.mapImage();
 
+    using double3 = gls::DVector<3>;
+
     // Only consider pixels with variance lower than the expected noise value
-    double varianceMax = 0.001;
+    double3 varianceMax = 0.001;
 
     // Limit to pixels the more linear intensity zone of the sensor
     const double maxValue = 0.5;
@@ -796,15 +809,15 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     // Collect pixel statistics
     double s_x = 0;
     double s_xx = 0;
-    gls::DVector<3> s_y = gls::DVector<3>::zeros();
-    gls::DVector<3> s_xy = gls::DVector<3>::zeros();
+    double3 s_y = 0;
+    double3 s_xy = 0;
 
     double N = 0;
     noiseStatsCpu.apply([&](const gls::rgba_pixel_float& ns, int x, int y) {
         double m = ns[0];
-        gls::DVector<3> v = { ns[1], ns[2], ns[3] };
+        double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= gls::DVector<3>(varianceMax))) {
+        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             s_x += m;
             s_y += v;
             s_xx += m * m;
@@ -818,12 +831,12 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     auto nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
 
     // Estimate regression mean square error
-    gls::DVector<3> err2 = gls::DVector<3>::zeros();
+    double3 err2 = 0;
     noiseStatsCpu.apply([&](const gls::rgba_pixel_float& ns, int x, int y) {
         double m = ns[0];
-        gls::DVector<3> v = { ns[1], ns[2], ns[3] };
+        double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= gls::DVector<3>(varianceMax))) {
+        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = nlfP - v;
             err2 += diff * diff;
@@ -834,19 +847,22 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
 //    std::cout << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
 //              << " on " << std::setprecision(1) << std::fixed << 100 * N / (image.width * image.height) << "% pixels"<< std::endl;
 
+    // Update the maximum variance with the model
+    varianceMax = nlfB;
+
     // Redo the statistics collection limiting the sample to pixels that fit well the linear model
     s_x = 0;
     s_xx = 0;
-    s_y = gls::DVector<3>::zeros();
-    s_xy = gls::DVector<3>::zeros();
+    s_y = 0;
+    s_xy = 0;
     N = 0;
-    gls::DVector<3> newErr2 = gls::DVector<3>::zeros();
+    double3 newErr2 = 0;
     int discarded = 0;
     noiseStatsCpu.apply([&](const gls::rgba_pixel_float& ns, int x, int y) {
         double m = ns[0];
-        gls::DVector<3> v = { ns[1], ns[2], ns[3] };
+        double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= gls::DVector<3>(varianceMax))) {
+        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = abs(nlfP - v);
             auto diffSquare = diff * diff;
@@ -882,8 +898,8 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     nlfB *= varianceExposureAdjustment;
 
     return std::pair (
-        gls::Vector<3> { (float) nlfA[0], (float) nlfA[1], (float) nlfA[2] }, // A values
-        gls::Vector<3> { (float) nlfB[0], (float) nlfB[1], (float) nlfB[2] }  // B values
+        nlfA, // A values
+        nlfB  // B values
     );
 }
 
@@ -920,28 +936,20 @@ struct ImageVectorPairAdapter {
 
 typedef ImageVectorPairAdapter<gls::rgba_pixel_float> RGBAImageVectorPairAdapter;
 
-gls::Vector<4> toVector(const gls::rgba_pixel_float& p) {
-    return gls::Vector<4> { p[0], p[1], p[2], p[3] };
-}
-
-gls::Vector<3> toVector(const gls::rgb_pixel_float& p) {
-    return gls::Vector<3> { p[0], p[1], p[2] };
-}
-
 class RGBALineEstimator : virtual public RTL::Estimator<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>, RGBAImageVectorPairAdapter > {
    public:
     virtual line_model<gls::Vector<4>> ComputeModel(const RGBAImageVectorPairAdapter& data, const std::set<int>& samples) {
-        gls::Vector<4> s_x = gls::Vector<4>::zeros();
-        gls::Vector<4> s_y = gls::Vector<4>::zeros();
-        gls::Vector<4> s_xx = gls::Vector<4>::zeros();
-        gls::Vector<4> s_xy = gls::Vector<4>::zeros();
+        gls::Vector<4> s_x = 0;
+        gls::Vector<4> s_y = 0;
+        gls::Vector<4> s_xx = 0;
+        gls::Vector<4> s_xy = 0;
         float N = 0;
 
         for (auto itr = samples.begin(); itr != samples.end(); itr++) {
             const sample<gls::rgba_pixel_float> p = data[*itr];
 
-            gls::Vector<4> m = toVector(p.mean);
-            gls::Vector<4> v = toVector(p.var);
+            gls::Vector<4> m = p.mean.v;
+            gls::Vector<4> v = p.var.v;
 
             s_x += m;
             s_y += v;
@@ -957,25 +965,57 @@ class RGBALineEstimator : virtual public RTL::Estimator<line_model<gls::Vector<4
     }
 
     virtual float ComputeError(const line_model<gls::Vector<4>>& model, const sample<gls::rgba_pixel_float>& sample) {
-        const auto diff = toVector(sample.var) - (model.a + model.b * toVector(sample.mean));
+        const auto diff = gls::Vector<4>(sample.var.v) - (model.a + model.b * gls::Vector<4>(sample.mean.v));
 
         return sqrt(dot(diff, diff));
     }
 };
 
-RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage, float exposure_multiplier, BayerPattern bayerPattern) {
+void dumpNoiseImage(const gls::image<gls::rgba_pixel_float>& image, float a, float b, const std::string& name) {
+    gls::image<gls::luma_pixel_16> luma(image.size());
+
+    luma.apply([&image, a, b] (gls::luma_pixel_16* p, int x, int y) {
+        *p = std::clamp((int) (0xffff * a * (image[y][x].green + b)), 0, 0xffff);
+    });
+    luma.write_png_file("/Users/fabio/Statistics/" + name + ".png");
+}
+
+// kernel void despeckleRawBlackImage(read_only image2d_t rawImage, int bayerPattern, write_only image2d_t despeckledImage);
+void despeckleRawBlackImage(gls::OpenCLContext* glsContext,
+                            const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                            BayerPattern bayerPattern,
+                            gls::cl_image_2d<gls::luma_pixel_float>* despeckledImage) {
+
+}
+
+RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
+                     const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                     const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
+                     float exposure_multiplier,
+                     BayerPattern bayerPattern) {
     gls::cl_image_2d<gls::rgba_pixel_float> meanImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
     gls::cl_image_2d<gls::rgba_pixel_float> varImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
+    gls::cl_image_2d<gls::rgba_pixel_float> kurtImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
 
-    rawNoiseStatistics(glsContext, rawImage, bayerPattern, &meanImage, &varImage);
+    rawNoiseStatistics(glsContext, rawImage, bayerPattern, sobelImage, &meanImage, &varImage, &kurtImage);
 
     const auto meanImageCpu = meanImage.mapImage();
     const auto varImageCpu = varImage.mapImage();
+    const auto kurtImageCpu = kurtImage.mapImage();
+
+//    static int count = 0;
+//    dumpNoiseImage(meanImageCpu, 1, 0, "mean9x9-" + std::to_string(count));
+//    dumpNoiseImage(varImageCpu, 1, 0, "variance9x9-" + std::to_string(count));
+//    dumpNoiseImage(kurtImageCpu, 0.1, 2, "kurtosis9x9-" + std::to_string(count));
+//    count++;
+
+    const float minK = -1.0;
+    const float maxK = 1.0;
 
     const bool use_ransac = false;
     if (use_ransac) {
         RGBALineEstimator estimator;
-        RTL::RANSAC<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>, RGBAImageVectorPairAdapter> ransac(&estimator);
+        RTL::LMedS<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>, RGBAImageVectorPairAdapter> ransac(&estimator);
         ransac.SetParamThreshold(1e-6);
         ransac.SetParamIteration(100);
 
@@ -990,31 +1030,34 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls:
         std::cout << "Estimated line model a: " << std::setprecision(4) << std::scientific << model.a << ", b: " << model.b << " with loss " << loss << std::endl;
 
         return std::pair (
-            gls::Vector<4> { (float) model.a[0], (float) model.a[1], (float) model.a[2], (float) model.a[3] }, // A values
-            gls::Vector<4> { (float) model.b[0], (float) model.b[1], (float) model.b[2], (float) model.b[3] }  // B values
+            model.a, // A values
+            model.b  // B values
         );
     }
 
+    using double4 = gls::DVector<4>;
+
     // Only consider pixels with variance lower than the expected noise value
-    double varianceMax = 0.001;
+    double4 varianceMax = 0.001;
 
     // Limit to pixels the more linear intensity zone of the sensor
     const double maxValue = 0.5;
     const double minValue = 0.001;
 
     // Collect pixel statistics
-    gls::DVector<4> s_x = gls::DVector<4>::zeros();
-    gls::DVector<4> s_y = gls::DVector<4>::zeros();
-    gls::DVector<4> s_xx = gls::DVector<4>::zeros();
-    gls::DVector<4> s_xy = gls::DVector<4>::zeros();
+    double4 s_x = 0;
+    double4 s_y = 0;
+    double4 s_xx = 0;
+    double4 s_xy = 0;
 
     double N = 0;
     meanImageCpu.apply([&](const gls::rgba_pixel_float& mm, int x, int y) {
-        const gls::rgba_pixel_float& vv = varImageCpu[y][x];
-        gls::DVector<4> m = { mm[0], mm[1], mm[2], mm[3] };
-        gls::DVector<4> v = { vv[0], vv[1], vv[2], vv[3] };
+        double4 m = mm.v;
+        double4 v = varImageCpu[y][x].v;
+        double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= gls::DVector<4>(minValue)) && all(v <= gls::DVector<4>(maxValue)) && all(v <= gls::DVector<4>(varianceMax))) {
+        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+            all(k > double4(minK)) && all(k < double4(maxK))) {
             s_x += m;
             s_y += v;
             s_xx += m * m;
@@ -1028,13 +1071,14 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls:
     auto nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
 
     // Estimate regression mean square error
-    gls::DVector<4> err2 = gls::DVector<4>::zeros();
+    double4 err2 = 0;
     meanImageCpu.apply([&](const gls::rgba_pixel_float& mm, int x, int y) {
-        const gls::rgba_pixel_float& vv = varImageCpu[y][x];
-        gls::DVector<4> m = { mm[0], mm[1], mm[2], mm[3] };
-        gls::DVector<4> v = { vv[0], vv[1], vv[2], vv[3] };
+        double4 m = mm.v;
+        double4 v = varImageCpu[y][x].v;
+        double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= gls::DVector<4>(minValue)) && all(v <= gls::DVector<4>(maxValue)) && all(v <= gls::DVector<4>(varianceMax))) {
+        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+            all(k > double4(minK)) && all(k < double4(maxK))) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = nlfP - v;
             err2 += diff * diff;
@@ -1042,22 +1086,26 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls:
     });
     err2 /= N;
 
-//    std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-//              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+    std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
+              << " on " << /* std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) */ N << "% pixels"<< std::endl;
+
+    // Update the maximum variance with the model
+    varianceMax = nlfB;
 
     // Redo the statistics collection limiting the sample to pixels that fit well the linear model
-    s_x = gls::DVector<4>::zeros();
-    s_y = gls::DVector<4>::zeros();
-    s_xx = gls::DVector<4>::zeros();
-    s_xy = gls::DVector<4>::zeros();
+    s_x = 0;
+    s_y = 0;
+    s_xx = 0;
+    s_xy = 0;
     N = 0;
-    gls::DVector<4> newErr2 = gls::DVector<4>::zeros();
+    double4 newErr2 = 0;
     meanImageCpu.apply([&](const gls::rgba_pixel_float& mm, int x, int y) {
-        const gls::rgba_pixel_float& vv = varImageCpu[y][x];
-        gls::DVector<4> m = { mm[0], mm[1], mm[2], mm[3] };
-        gls::DVector<4> v = { vv[0], vv[1], vv[2], vv[3] };
+        double4 m = mm.v;
+        double4 v = varImageCpu[y][x].v;
+        double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= gls::DVector<4>(minValue)) && all(v <= gls::DVector<4>(maxValue)) && all(v <= gls::DVector<4>(varianceMax))) {
+        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+            all(k > double4(minK)) && all(k < double4(maxK))) {
             const auto nlfP = nlfA + nlfB * m;
             const auto diff = abs(nlfP - v);
             const auto diffSquare = diff * diff;
@@ -1081,10 +1129,11 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls:
     assert(all(newErr2 < err2));
 
     std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+              << " on " << /* std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) */ N << "% pixels"<< std::endl;
 
     meanImage.unmapImage(meanImageCpu);
     varImage.unmapImage(varImageCpu);
+    kurtImage.unmapImage(kurtImageCpu);
 
     double varianceExposureAdjustment = exposure_multiplier * exposure_multiplier;
 
@@ -1092,8 +1141,8 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls:
     nlfB *= varianceExposureAdjustment;
 
     return std::pair (
-        gls::Vector<4> { (float) nlfA[0], (float) nlfA[1], (float) nlfA[2], (float) nlfA[3] }, // A values
-        gls::Vector<4> { (float) nlfB[0], (float) nlfB[1], (float) nlfB[2], (float) nlfB[3] }  // B values
+        nlfA, // A values
+        nlfB  // B values
     );
 }
 

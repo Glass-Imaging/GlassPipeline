@@ -1759,27 +1759,111 @@ float4 readRAWQuad(read_only image2d_t rawImage, int2 imageCoordinates, constant
     const int2 b = offsets[raw_blue];
     const int2 g2 = offsets[raw_green2];
 
-    float red    = read_imagef(rawImage, 2 * imageCoordinates + r).x;
-    float green  = read_imagef(rawImage, 2 * imageCoordinates + g).x;
-    float blue   = read_imagef(rawImage, 2 * imageCoordinates + b).x;
-    float green2 = read_imagef(rawImage, 2 * imageCoordinates + g2).x;
+    float red    = read_imagef(rawImage, imageCoordinates + r).x;
+    float green  = read_imagef(rawImage, imageCoordinates + g).x;
+    float blue   = read_imagef(rawImage, imageCoordinates + b).x;
+    float green2 = read_imagef(rawImage, imageCoordinates + g2).x;
 
     return (float4) (red, green, blue, green2);
 }
 
-kernel void rawNoiseStatistics(read_only image2d_t inputImage, int bayerPattern, write_only image2d_t meanImage, write_only image2d_t varImage) {
+typedef struct STATS {
+    long n;
+    float4 M1, M2, M3, M4;
+} STATS;
+
+void clearStats(STATS* stats) {
+    stats->n = 0;
+    stats->M1 = 0;
+    stats->M2 = 0;
+    stats->M4 = 0;
+    stats->M3 = 0;
+}
+
+void accumulateStats(STATS* stats, float4 x) {
+    float4 delta, delta_n, delta_n2, term1;
+
+    long n1 = stats->n;
+    stats->n++;
+    delta = x - stats->M1;
+    delta_n = delta / stats->n;
+    delta_n2 = delta_n * delta_n;
+    term1 = delta * delta_n * n1;
+    stats->M1 += delta_n;
+    stats->M4 += term1 * delta_n2 * (stats->n * stats->n - 3 * stats->n + 3) + 6 * delta_n2 * stats->M2 - 4 * delta_n * stats->M3;
+    stats->M3 += term1 * delta_n * (stats->n - 2) - 3 * delta_n * stats->M2;
+    stats->M2 += term1;
+}
+
+float4 mean(STATS* stats) {
+    return stats->M1;
+}
+
+float4 variance(STATS* stats) { return stats->M2 / (stats->n - 1.0); }
+
+float4 standardDeviation(STATS* stats) { return sqrt(variance(stats)); }
+
+float4 skewness(STATS* stats) { return sqrt(float(stats->n)) * stats->M3 / pow(stats->M2, 1.5); }
+
+float4 kurtosis(STATS* stats) { return float(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0; }
+
+kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
+                               read_only image2d_t sobelImage,
+                               write_only image2d_t meanImage,
+                               write_only image2d_t varImage,
+                               write_only image2d_t kurtImage) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+
+    // Average the gradient over the RAW Quad
+    float2 gradient = read_imagef(sobelImage, 2 * imageCoordinates).xy;
+    gradient += read_imagef(sobelImage, 2 * imageCoordinates + (int2) (1, 0)).xy;
+    gradient += read_imagef(sobelImage, 2 * imageCoordinates + (int2) (0, 1)).xy;
+    gradient += read_imagef(sobelImage, 2 * imageCoordinates + (int2) (1, 1)).xy;
+    gradient = abs(gradient / 4.0);
+
+    // Gradient direction in [0..1] (first quadrant)
+    float direction = 2 * atan2pi(gradient.y, gradient.x);
+
+    constant const int2* offsets = bayerOffsets[bayerPattern];
+
+    int radius = 4;
+
+    STATS stats;
+    clearStats(&stats);
+    float4 signal;
+    for (int y = -radius; y <= radius; y++) {
+        for (int x = -radius; x <= radius; x++) {
+            // Sample in the orthogonal direction to the gradient
+            float sample_direction = 1 - 2 * atan2pi((float) abs(y), (float) abs(x));
+
+            if ((x == 0 && y == 0) || (abs(sample_direction - direction) <= 0.125)) {
+                float4 inputSample = readRAWQuad(rawImage, 2 * (imageCoordinates + (int2)(x, y)), offsets);
+                accumulateStats(&stats, inputSample);
+                if (x == 0 && y == 0) {
+                    signal = inputSample;
+                }
+            }
+        }
+    }
+
+    write_imagef(meanImage, imageCoordinates, mean(&stats));
+    write_imagef(varImage, imageCoordinates, variance(&stats));
+    write_imagef(kurtImage, imageCoordinates, kurtosis(&stats));
+}
+
+kernel void rawNoiseStatistics_old(read_only image2d_t rawImage, int bayerPattern, write_only image2d_t meanImage, write_only image2d_t varImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
 
     constant const int2* offsets = bayerOffsets[bayerPattern];
 
-    int radius = 2;
+    int radius = 8;
     int count = (2 * radius + 1) * (2 * radius + 1);
 
     float4 sum = 0;
     float4 sumSq = 0;
     for (int y = -radius; y <= radius; y++) {
         for (int x = -radius; x <= radius; x++) {
-            float4 inputSample = readRAWQuad(inputImage, imageCoordinates + (int2)(x, y), offsets);
+            float4 inputSample = readRAWQuad(rawImage, 2 * imageCoordinates + (int2)(x, y), offsets);
             sum += inputSample;
             sumSq += inputSample * inputSample;
         }
