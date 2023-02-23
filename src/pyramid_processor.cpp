@@ -85,7 +85,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
         }
 
         if (calibrateFromImage) {
-            (*nlfParameters)[i] = MeasureYCbCrNLF(glsContext, *currentLayer, exposure_multiplier);
+            (*nlfParameters)[i] = MeasureYCbCrNLF(glsContext, *currentLayer, *currentGradientLayer, exposure_multiplier);
         }
 
         thresholdMultipliers[i] = nflMultiplier((*denoiseParameters)[i]);
@@ -98,7 +98,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
 
         if (i < levels - 1) {
             // Subtract the previous layer's noise from the current one
-            std::cout << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
+            // std::cout << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
 
             const auto np = YCbCrNLF {(*nlfParameters)[i].first * thresholdMultipliers[i], (*nlfParameters)[i].second * thresholdMultipliers[i]};
             subtractNoiseImage(glsContext, *denoiseInput,
@@ -111,7 +111,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
                                subtractedImagePyramid[i].get());
         }
 
-        std::cout << "Denoising image level " << i << " with multipliers " << thresholdMultipliers[i] << std::endl;
+        // std::cout << "Denoising image level " << i << " with multipliers " << thresholdMultipliers[i] << std::endl;
 
         // Denoise current layer
         denoiseImage(glsContext, i < levels - 1 ? *(subtractedImagePyramid[i]) :  *denoiseInput, *gradientInput,
@@ -186,7 +186,7 @@ void PyramidProcessor<levels>::fuseFrame(gls::OpenCLContext* glsContext,
         }
 
         if (calibrateFromImage) {
-            (*nlfParameters)[i] = MeasureYCbCrNLF(glsContext, *currentLayer, exposure_multiplier);
+            (*nlfParameters)[i] = MeasureYCbCrNLF(glsContext, *currentLayer, *currentGradientLayer, exposure_multiplier);
         }
     }
 

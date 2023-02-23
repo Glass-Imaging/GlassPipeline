@@ -1732,7 +1732,91 @@ kernel void laplacianFilterImage(read_only image2d_t inputImage, write_only imag
     write_imagef(outputImage, imageCoordinates, (float4) (value, 0));
 }
 
-kernel void noiseStatistics(read_only image2d_t inputImage, write_only image2d_t outputImage) {
+#define DECLARE_STATS(base_type)                                                                              \
+                                                                                                              \
+    typedef struct STATS_##base_type {                                                                        \
+        long n;                                                                                               \
+        base_type M1, M2, M3, M4;                                                                             \
+    } STATS_##base_type;                                                                                      \
+                                                                                                              \
+    void __attribute__((overloadable)) Clear(STATS_##base_type* stats) {                                      \
+        stats->n = 0;                                                                                         \
+        stats->M1 = 0;                                                                                        \
+        stats->M2 = 0;                                                                                        \
+        stats->M4 = 0;                                                                                        \
+        stats->M3 = 0;                                                                                        \
+    }                                                                                                         \
+                                                                                                              \
+    void __attribute__((overloadable)) Accumulate(STATS_##base_type* stats, base_type x) {                    \
+        base_type delta, delta_n, delta_n2, term1;                                                            \
+                                                                                                              \
+        long n1 = stats->n;                                                                                   \
+        stats->n++;                                                                                           \
+        delta = x - stats->M1;                                                                                \
+        delta_n = delta / stats->n;                                                                           \
+        delta_n2 = delta_n * delta_n;                                                                         \
+        term1 = delta * delta_n * n1;                                                                         \
+        stats->M1 += delta_n;                                                                                 \
+        stats->M4 += term1 * delta_n2 * (stats->n * stats->n - 3 * stats->n + 3) + 6 * delta_n2 * stats->M2 - \
+                     4 * delta_n * stats->M3;                                                                 \
+        stats->M3 += term1 * delta_n * (stats->n - 2) - 3 * delta_n * stats->M2;                              \
+        stats->M2 += term1;                                                                                   \
+    }                                                                                                         \
+                                                                                                              \
+    base_type __attribute__((overloadable)) Mean(STATS_##base_type* stats) { return stats->M1; }              \
+                                                                                                              \
+    base_type __attribute__((overloadable)) Variance(STATS_##base_type* stats) {                              \
+        return stats->M2 / (stats->n - 1.0);                                                                  \
+    }                                                                                                         \
+                                                                                                              \
+    base_type __attribute__((overloadable)) StandardDeviation(STATS_##base_type* stats) {                     \
+        return sqrt(Variance(stats));                                                                         \
+    }                                                                                                         \
+                                                                                                              \
+    base_type __attribute__((overloadable)) Skewness(STATS_##base_type* stats) {                              \
+        return sqrt(float(stats->n)) * stats->M3 / pow(stats->M2, 1.5);                                       \
+    }                                                                                                         \
+                                                                                                              \
+    base_type __attribute__((overloadable)) Kurtosis(STATS_##base_type* stats) {                              \
+        return float(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0;                                   \
+    }
+
+DECLARE_STATS(float3)
+
+DECLARE_STATS(float4)
+
+kernel void YCbCrNoiseStatistics(read_only image2d_t inputImage,
+                                 read_only image2d_t sobelImage,
+                                 write_only image2d_t outputImage) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+
+    float2 gradient = abs(read_imagef(sobelImage, imageCoordinates).xy);
+
+    // Gradient direction in [0..1] (first quadrant)
+    float direction = 2 * atan2pi(gradient.y, gradient.x);
+
+    int radius = 4;
+
+    STATS_float3 stats;
+    Clear(&stats);
+
+    for (int y = -radius; y <= radius; y++) {
+        for (int x = -radius; x <= radius; x++) {
+            float sample_direction = 1 - 2 * atan2pi((float) abs(y), (float) abs(x));
+
+            if ((x == 0 && y == 0) || (abs(sample_direction - direction) <= 0.125)) {
+                float3 inputSample = read_imagef(inputImage, imageCoordinates + (int2)(x, y)).xyz;
+                Accumulate(&stats, inputSample);
+            }
+        }
+    }
+    float3 mean = Mean(&stats);
+    float3 var = Variance(&stats);
+
+    write_imagef(outputImage, imageCoordinates, (float4) (mean.x, var));
+}
+
+kernel void BasicNoiseStatistics(read_only image2d_t inputImage, write_only image2d_t outputImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
 
     int radius = 2;
@@ -1767,46 +1851,6 @@ float4 readRAWQuad(read_only image2d_t rawImage, int2 imageCoordinates, constant
     return (float4) (red, green, blue, green2);
 }
 
-typedef struct STATS {
-    long n;
-    float4 M1, M2, M3, M4;
-} STATS;
-
-void clearStats(STATS* stats) {
-    stats->n = 0;
-    stats->M1 = 0;
-    stats->M2 = 0;
-    stats->M4 = 0;
-    stats->M3 = 0;
-}
-
-void accumulateStats(STATS* stats, float4 x) {
-    float4 delta, delta_n, delta_n2, term1;
-
-    long n1 = stats->n;
-    stats->n++;
-    delta = x - stats->M1;
-    delta_n = delta / stats->n;
-    delta_n2 = delta_n * delta_n;
-    term1 = delta * delta_n * n1;
-    stats->M1 += delta_n;
-    stats->M4 += term1 * delta_n2 * (stats->n * stats->n - 3 * stats->n + 3) + 6 * delta_n2 * stats->M2 - 4 * delta_n * stats->M3;
-    stats->M3 += term1 * delta_n * (stats->n - 2) - 3 * delta_n * stats->M2;
-    stats->M2 += term1;
-}
-
-float4 mean(STATS* stats) {
-    return stats->M1;
-}
-
-float4 variance(STATS* stats) { return stats->M2 / (stats->n - 1.0); }
-
-float4 standardDeviation(STATS* stats) { return sqrt(variance(stats)); }
-
-float4 skewness(STATS* stats) { return sqrt(float(stats->n)) * stats->M3 / pow(stats->M2, 1.5); }
-
-float4 kurtosis(STATS* stats) { return float(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0; }
-
 kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
                                read_only image2d_t sobelImage,
                                write_only image2d_t meanImage,
@@ -1828,8 +1872,8 @@ kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
 
     int radius = 4;
 
-    STATS stats;
-    clearStats(&stats);
+    STATS_float4 stats;
+    Clear(&stats);
     float4 signal;
     for (int y = -radius; y <= radius; y++) {
         for (int x = -radius; x <= radius; x++) {
@@ -1838,7 +1882,7 @@ kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
 
             if ((x == 0 && y == 0) || (abs(sample_direction - direction) <= 0.125)) {
                 float4 inputSample = readRAWQuad(rawImage, 2 * (imageCoordinates + (int2)(x, y)), offsets);
-                accumulateStats(&stats, inputSample);
+                Accumulate(&stats, inputSample);
                 if (x == 0 && y == 0) {
                     signal = inputSample;
                 }
@@ -1846,12 +1890,12 @@ kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
         }
     }
 
-    write_imagef(meanImage, imageCoordinates, mean(&stats));
-    write_imagef(varImage, imageCoordinates, variance(&stats));
-    write_imagef(kurtImage, imageCoordinates, kurtosis(&stats));
+    write_imagef(meanImage, imageCoordinates, Mean(&stats));
+    write_imagef(varImage, imageCoordinates, Variance(&stats));
+    write_imagef(kurtImage, imageCoordinates, Kurtosis(&stats));
 }
 
-kernel void rawNoiseStatistics_old(read_only image2d_t rawImage, int bayerPattern, write_only image2d_t meanImage, write_only image2d_t varImage) {
+kernel void BasicRawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern, write_only image2d_t meanImage, write_only image2d_t varImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
 
     constant const int2* offsets = bayerOffsets[bayerPattern];

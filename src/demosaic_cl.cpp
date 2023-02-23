@@ -201,6 +201,26 @@ void fasteDebayer(gls::OpenCLContext* glsContext,
            rawImage.getImage2D(), rgbImage->getImage2D(), bayerPattern);
 }
 
+void YCbCrNoiseStatistics(gls::OpenCLContext* glsContext,
+                        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                        const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage,
+                        gls::cl_image_2d<gls::rgba_pixel_float>* statsImage) {
+    // Load the shader source
+    const auto program = glsContext->loadProgram("demosaic");
+
+    // Bind the kernel parameters
+    auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
+                                    cl::Image2D,  // sobelImage
+                                    cl::Image2D   // statsImage
+                                    >(program, "YCbCrNoiseStatistics");
+
+    // Schedule the kernel on the GPU
+    kernel(gls::OpenCLContext::buildEnqueueArgs(statsImage->width, statsImage->height),
+           inputImage.getImage2D(),
+           sobelImage.getImage2D(),
+           statsImage->getImage2D());
+}
+
 void rawNoiseStatistics(gls::OpenCLContext* glsContext,
                         const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                         BayerPattern bayerPattern,
@@ -792,9 +812,13 @@ void blendHighlightsImage(gls::OpenCLContext* glsContext,
            inputImage.getImage2D(), clip, outputImage->getImage2D());
 }
 
-YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& image, float exposure_multiplier) {
-    gls::cl_image_2d<gls::rgba_pixel_float> noiseStats(glsContext->clContext(), image.width, image.height);
-    applyKernel(glsContext, "noiseStatistics", image, &noiseStats);
+YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
+                         const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage,
+                         float exposure_multiplier) {
+    gls::cl_image_2d<gls::rgba_pixel_float> noiseStats(glsContext->clContext(), inputImage.width, inputImage.height);
+    YCbCrNoiseStatistics(glsContext, inputImage, sobelImage, &noiseStats);
+    // applyKernel(glsContext, "noiseStatistics_old", inputImage, &noiseStats);
     const auto noiseStatsCpu = noiseStats.mapImage();
 
     using double3 = gls::DVector<3>;
@@ -817,7 +841,9 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
+        bool validStats = !(isnan(m) || any(isnan(v)));
+
+        if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             s_x += m;
             s_y += v;
             s_xx += m * m;
@@ -836,7 +862,9 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
+        bool validStats = !(isnan(m) || any(isnan(v)));
+
+        if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = nlfP - v;
             err2 += diff * diff;
@@ -845,7 +873,7 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     err2 /= N;
 
 //    std::cout << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-//              << " on " << std::setprecision(1) << std::fixed << 100 * N / (image.width * image.height) << "% pixels"<< std::endl;
+//              << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels"<< std::endl;
 
     // Update the maximum variance with the model
     varianceMax = nlfB;
@@ -862,7 +890,9 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = { ns[1], ns[2], ns[3] };
 
-        if (m >= minValue && m <= maxValue && all(v <= varianceMax)) {
+        bool validStats = !(isnan(m) || any(isnan(v)));
+
+        if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = abs(nlfP - v);
             auto diffSquare = diff * diff;
@@ -881,14 +911,19 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
     });
     newErr2 /= N;
 
-    // Estimate the new regression parameters
-    nlfB = max((N * s_xy - s_x * s_y) / (N * s_xx - s_x * s_x), 1e-8);
-    nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
+    if (all(newErr2 <= err2)) {
+        // Estimate the new regression parameters
+        nlfB = max((N * s_xy - s_x * s_y) / (N * s_xx - s_x * s_x), 1e-8);
+        nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
 
-    assert(all(newErr2 < err2));
+        std::cout << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
+                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+    } else {
+        std::cout << "*** WARNING *** Pyramid NLF second iteration is worse: MSE: " << sqrt(newErr2)
+                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+    }
 
-    std::cout << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-              << " on " << std::setprecision(1) << std::fixed << 100 * N / (image.width * image.height) << "% pixels" << std::endl;
+    // assert(all(newErr2 < err2));
 
     noiseStats.unmapImage(noiseStatsCpu);
 
@@ -1056,7 +1091,9 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
         double4 v = varImageCpu[y][x].v;
         double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+        bool validStats = !(any(isnan(m)) || any(isnan(v)) || any(isnan(k)));
+
+        if (validStats && all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
             all(k > double4(minK)) && all(k < double4(maxK))) {
             s_x += m;
             s_y += v;
@@ -1077,7 +1114,9 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
         double4 v = varImageCpu[y][x].v;
         double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+        bool validStats = !(any(isnan(m)) || any(isnan(v)) || any(isnan(k)));
+
+        if (validStats && all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
             all(k > double4(minK)) && all(k < double4(maxK))) {
             auto nlfP = nlfA + nlfB * m;
             auto diff = nlfP - v;
@@ -1087,7 +1126,7 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     err2 /= N;
 
     std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-              << " on " << /* std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) */ N << "% pixels"<< std::endl;
+              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
 
     // Update the maximum variance with the model
     varianceMax = nlfB;
@@ -1104,7 +1143,9 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
         double4 v = varImageCpu[y][x].v;
         double4 k = kurtImageCpu[y][x].v;
 
-        if (all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
+        bool validStats = !(any(isnan(m)) || any(isnan(v)) || any(isnan(k)));
+
+        if (validStats && all(m >= double4(minValue)) && all(m <= double4(maxValue)) && all(v <= varianceMax) &&
             all(k > double4(minK)) && all(k < double4(maxK))) {
             const auto nlfP = nlfA + nlfB * m;
             const auto diff = abs(nlfP - v);
@@ -1129,7 +1170,7 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     assert(all(newErr2 < err2));
 
     std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-              << " on " << /* std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) */ N << "% pixels"<< std::endl;
+              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
 
     meanImage.unmapImage(meanImageCpu);
     varImage.unmapImage(varImageCpu);
