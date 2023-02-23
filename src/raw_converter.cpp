@@ -130,8 +130,8 @@ std::array<gls::Vector<2>, 3> getRawVariance(const RawNLF &rawNLF)
     return {redVariance, greenVariance, blueVariance};
 }
 
-void dumpGradientImage(const gls::cl_image_2d<gls::luma_alpha_pixel_float> &image)
-{
+template<typename T>
+void dumpGradientImage(const gls::cl_image_2d<T>& image) {
     gls::image<gls::rgb_pixel> out(image.width, image.height);
     const auto image_cpu = image.mapImage();
     out.apply([&](gls::rgb_pixel *p, int x, int y)
@@ -151,7 +151,7 @@ void dumpGradientImage(const gls::cl_image_2d<gls::luma_alpha_pixel_float> &imag
             (uint8_t) (val * std::lerp(1.0f, 0.0f, 1 - direction)),
         }; });
     image.unmapImage(image_cpu);
-    static int count = 1;
+    static int count = 0;
     out.write_png_file("/Users/fabio/raw_gradient_sgn_5_fine_" + std::to_string(count++) + ".png");
 }
 
@@ -176,26 +176,15 @@ gls::cl_image_2d<gls::rgba_pixel_float> *RawConverter::demosaic(const gls::image
                  demosaicParameters->scale_mul,
                  demosaicParameters->black_level / 0xffff);
 
-    // int max = 0;
-    // auto clScaledRawImage_map = clScaledRawImage->mapImage();
-    // for (int j = 0; j < clScaledRawImage_map.height; j++)
-    // {
-    //     for (int i = 0; i < clScaledRawImage_map.width; i++)
-    //     {
-    //         auto pixel = clScaledRawImage_map[j][i];
-    //         if (pixel > max)
-    //             max = pixel;
-    //     }
-    // }
-    // printf("MAX  clRawImage_map %i\n", max);
+    rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
+    // dumpGradientImage(*clRawSobelImage);
 
-    NoiseModel<5> *noiseModel = &demosaicParameters->noiseModel;
+    NoiseModel<5>* noiseModel = &demosaicParameters->noiseModel;
 
-    // LOG_INFO(TAG) << "NoiseLevel: " << demosaicParameters->noiseLevel << std::endl;
+    LOG_INFO(TAG) << "NoiseLevel: " << demosaicParameters->noiseLevel << std::endl;
 
-    if (calibrateFromImage)
-    {
-        noiseModel->rawNlf = MeasureRawNLF(_glsContext, *clScaledRawImage,
+    if (calibrateFromImage) {
+        noiseModel->rawNlf = MeasureRawNLF(_glsContext, *clScaledRawImage, *clRawSobelImage,
                                            demosaicParameters->exposure_multiplier,
                                            demosaicParameters->bayerPattern);
     }
@@ -221,7 +210,6 @@ gls::cl_image_2d<gls::rgba_pixel_float> *RawConverter::demosaic(const gls::image
         rawRGBAToBayer(_glsContext, *denoisedRgbaRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern);
     }
 
-    rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
     gaussianBlurSobelImage(_glsContext, *clScaledRawImage, *clRawSobelImage, rawVariance[1], 1.5, 4.5, clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 

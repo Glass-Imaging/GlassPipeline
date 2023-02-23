@@ -69,12 +69,6 @@ void fasteDebayer(gls::OpenCLContext* glsContext,
                   gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
                   BayerPattern bayerPattern);
 
-void rawNoiseStatistics(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                        BayerPattern bayerPattern,
-                        gls::cl_image_2d<gls::rgba_pixel_float>* meanImage,
-                        gls::cl_image_2d<gls::rgba_pixel_float>* varImage);
-
 template <typename T>
 void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName,
                    const gls::cl_image_2d<T>& inputImage, gls::cl_image_2d<T>* outputImage);
@@ -187,7 +181,10 @@ void blendHighlightsImage(gls::OpenCLContext* glsContext,
 
 YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& image, float exposure_multiplier);
 
-RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage, float exposure_multiplier, BayerPattern bayerPattern);
+RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
+                     const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                     const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
+                     float exposure_multiplier, BayerPattern bayerPattern);
 
 void clFuseFrames(gls::OpenCLContext* glsContext,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& referenceImage,
