@@ -377,9 +377,9 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
             std::max(exposure_multiplier, 1.0f) * (pre_mul[pre_mul_idx] / *minmax.first) * 65535.0 /
             (demosaicParameters->white_level - demosaicParameters->black_level);
     }
-    printf("scale_mul: %f, %f, %f, %f\n", (demosaicParameters->scale_mul)[0],
-           (demosaicParameters->scale_mul)[1], (demosaicParameters->scale_mul)[2],
-           (demosaicParameters->scale_mul)[3]);
+    // printf("scale_mul: %f, %f, %f, %f\n", (demosaicParameters->scale_mul)[0],
+    //        (demosaicParameters->scale_mul)[1], (demosaicParameters->scale_mul)[2],
+    //        (demosaicParameters->scale_mul)[3]);
 
     return exposure_multiplier;
 }

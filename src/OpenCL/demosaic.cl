@@ -1803,9 +1803,9 @@ float4 variance(STATS* stats) { return stats->M2 / (stats->n - 1.0); }
 
 float4 standardDeviation(STATS* stats) { return sqrt(variance(stats)); }
 
-float4 skewness(STATS* stats) { return sqrt(float(stats->n)) * stats->M3 / pow(stats->M2, 1.5); }
+float4 skewness(STATS* stats) { return sqrt((float)(stats->n)) * stats->M3 / pow(stats->M2, 1.5); }
 
-float4 kurtosis(STATS* stats) { return float(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0; }
+float4 kurtosis(STATS* stats) { return (float)(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0; }
 
 kernel void rawNoiseStatistics(read_only image2d_t rawImage, int bayerPattern,
                                read_only image2d_t sobelImage,
