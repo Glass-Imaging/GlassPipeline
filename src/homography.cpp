@@ -75,26 +75,28 @@ gls::Vector<N, T> minEigenvectorSVD(gls::Matrix<N, N, T> A) {
 }
 
 template <typename TP>
-void buildHomogeneousLinearLeastSquaresMatrix(const std::vector<Point2f>& src, const std::vector<Point2f>& dst, TP& P) {
-    const int count = (int) src.size();
+void buildHomogeneousLinearLeastSquaresMatrix(const std::vector<Point2f>& src,
+                                              const std::vector<Point2f>& dst, TP& P) {
+    const int count = (int)src.size();
     assert(dst.size() == count);
     assert(P.width == 9 && P.height == 2 * count);
 
     for (int i = 0; i < count; i++) {
-        const gls::basic_point<double> p1 = { src[i].x, src[i].y };
-        const gls::basic_point<double> p2 = { dst[i].x, dst[i].y };
+        const gls::basic_point<double> p1 = {src[i].x, src[i].y};
+        const gls::basic_point<double> p2 = {dst[i].x, dst[i].y};
 
-        gls::Vector<9, double> dx = { -p1.x,   -p1.y, -1, 0, 0, 0, p1.x * p2.x, p1.y * p2.x, p2.x };
-        gls::Vector<9, double> dy = { 0, 0, 0, -p1.x, -p1.y, -1,   p1.x * p2.y, p1.y * p2.y, p2.y };
+        gls::Vector<9, double> dx = {-p1.x, -p1.y, -1, 0, 0, 0, p1.x * p2.x, p1.y * p2.x, p2.x};
+        gls::Vector<9, double> dy = {0, 0, 0, -p1.x, -p1.y, -1, p1.x * p2.y, p1.y * p2.y, p2.y};
 
         for (int j = 0; j < 9; j++) {
-            P[2 * i][j]     = dx[j];
+            P[2 * i][j] = dx[j];
             P[2 * i + 1][j] = dy[j];
         }
     }
 }
 
-gls::Matrix<3, 3> getPerspectiveTransformSVD(const std::vector<Point2f>& src, const std::vector<Point2f>& dst) {
+gls::Matrix<3, 3> getPerspectiveTransformSVD(const std::vector<Point2f>& src,
+                                             const std::vector<Point2f>& dst) {
     gls::Matrix<9, 9, double> ata;
 
     if (src.size() == 4 && dst.size() == 4) {
@@ -103,7 +105,7 @@ gls::Matrix<3, 3> getPerspectiveTransformSVD(const std::vector<Point2f>& src, co
 
         ata = transpose(A) * A;
     } else {
-        int count = (int) src.size();
+        int count = (int)src.size();
 
         auto A = gls::image<double>(9, 2 * count);
         buildHomogeneousLinearLeastSquaresMatrix(src, dst, A);
@@ -125,8 +127,9 @@ gls::Matrix<3, 3> getPerspectiveTransformSVD(const std::vector<Point2f>& src, co
 }
 
 template <typename TA, typename TB>
-void getPerspectiveTransformAB(const std::vector<Point2f>& src, const std::vector<Point2f>& dst, TA& a, TB& b) {
-    const int count = (int) src.size();
+void getPerspectiveTransformAB(const std::vector<Point2f>& src, const std::vector<Point2f>& dst,
+                               TA& a, TB& b) {
+    const int count = (int)src.size();
     assert(a.width == 8 && a.height == 2 * count);
     assert(b.width == 1 && b.height == 2 * count);
 
@@ -147,8 +150,9 @@ void getPerspectiveTransformAB(const std::vector<Point2f>& src, const std::vecto
     }
 }
 
-gls::Matrix<3, 3> getPerspectiveTransformLSM2(const std::vector<Point2f>& src, const std::vector<Point2f>& dst) {
-    int count = (int) src.size();
+gls::Matrix<3, 3> getPerspectiveTransformLSM2(const std::vector<Point2f>& src,
+                                              const std::vector<Point2f>& dst) {
+    int count = (int)src.size();
     gls::Matrix<8, 8> ata;
     gls::Vector<8> atb;
 
@@ -159,7 +163,7 @@ gls::Matrix<3, 3> getPerspectiveTransformLSM2(const std::vector<Point2f>& src, c
 
         const auto at = transpose(a);
         ata = at * a;
-        atb = gls::Vector<8> (at * b);
+        atb = gls::Vector<8>(at * b);
     } else {
         auto a = gls::image<float>(8, 2 * count);
         auto b = gls::image<float>(1, 2 * count);
@@ -184,11 +188,7 @@ gls::Matrix<3, 3> getPerspectiveTransformLSM2(const std::vector<Point2f>& src, c
     // return inverse(aa) * bb;
     const auto h = LUSolve(ata, atb);
 
-    return {
-        h[0], h[1], h[2],
-        h[3], h[4], h[5],
-        h[6], h[7], 1
-    };
+    return {h[0], h[1], h[2], h[3], h[4], h[5], h[6], h[7], 1};
 }
 
 // Jacobi Solver - Computes Eigenvalues and Eigenvectors of Symmetric Square Matrices
@@ -358,7 +358,7 @@ void Jacobi(const gls::Matrix<N, N, T>& A, gls::Vector<N, T>* W, gls::Matrix<N, 
 }
 
 gls::Matrix<3, 3> findHomography(const std::vector<Point2f>& M, const std::vector<Point2f>& m) {
-    const int count = (int) M.size();
+    const int count = (int)M.size();
 
     typedef gls::Vector<2, double> vec2;
 
@@ -372,16 +372,16 @@ gls::Matrix<3, 3> findHomography(const std::vector<Point2f>& M, const std::vecto
         cm += vec2(m[i]);
         cM += vec2(M[i]);
     }
-    cm /= (double) count;
-    cM /= (double) count;
+    cm /= (double)count;
+    cM /= (double)count;
 
     // Find the mean distance from the barycenter
     for (int i = 0; i < count; i++) {
         sm += abs(vec2(m[i]) - cm);
         sM += abs(vec2(M[i]) - cM);
     }
-    sm /= (double) count;
-    sM /= (double) count;
+    sm /= (double)count;
+    sM /= (double)count;
 
     const auto eps = std::numeric_limits<double>::epsilon();
     if (fabs(sm[0]) < eps || fabs(sm[1]) < eps || fabs(sM[0]) < eps || fabs(sM[1]) < eps) {
@@ -395,8 +395,10 @@ gls::Matrix<3, 3> findHomography(const std::vector<Point2f>& M, const std::vecto
         const auto p1 = (vec2(M[i]) - cM) / sM;
         const auto p2 = (vec2(m[i]) - cm) / sm;
 
-        const gls::Vector<9, double> Lx = { p1[0], p1[1], 1, 0, 0, 0, -p2[0] * p1[0], -p2[0] * p1[1], -p2[0] };
-        const gls::Vector<9, double> Ly = { 0, 0, 0, p1[0], p1[1], 1, -p2[1] * p1[0], -p2[1] * p1[1], -p2[1] };
+        const gls::Vector<9, double> Lx = {p1[0],          p1[1],          1,     0, 0, 0,
+                                           -p2[0] * p1[0], -p2[0] * p1[1], -p2[0]};
+        const gls::Vector<9, double> Ly = {
+            0, 0, 0, p1[0], p1[1], 1, -p2[1] * p1[0], -p2[1] * p1[1], -p2[1]};
 
         // Only build the top diagonal elements, replicate the rest with completeSymm (see below)
         for (int j = 0; j < 9; j++) {
@@ -417,22 +419,15 @@ gls::Matrix<3, 3> findHomography(const std::vector<Point2f>& M, const std::vecto
     const auto H0 = gls::Matrix<3, 3, double>(matV[8]);
 #endif
 
-    const gls::Matrix<3, 3, double> invHnorm = {
-        sm[0], 0, cm[0],
-        0, sm[1], cm[1],
-        0, 0, 1
-    };
+    const gls::Matrix<3, 3, double> invHnorm = {sm[0], 0, cm[0], 0, sm[1], cm[1], 0, 0, 1};
     const gls::Matrix<3, 3, double> Hnorm2 = {
-        1 / sM[0], 0, -cM[0] / sM[0],
-        0, 1 / sM[1], -cM[1] / sM[1],
-        0, 0, 1
-    };
+        1 / sM[0], 0, -cM[0] / sM[0], 0, 1 / sM[1], -cM[1] / sM[1], 0, 0, 1};
 
     // Invert the point set coordinates scaling
     const auto H = invHnorm * H0 * Hnorm2;
 
     // Convert to a float 3x3 Matrix and normalize
-    return gls::Matrix<3, 3, float>(H) / (float) H[2][2];
+    return gls::Matrix<3, 3, float>(H) / (float)H[2][2];
 }
 
 }  // namespace gls

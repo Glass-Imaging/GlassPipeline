@@ -23,8 +23,10 @@
 
 namespace gls {
 
-gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold, int max_iterations, std::vector<int>* inlier_indices = nullptr);
+gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints,
+                         float threshold, int max_iterations,
+                         std::vector<int>* inlier_indices = nullptr);
 
-} // namespace gls
+}  // namespace gls
 
 #endif /* RANSAC_hpp */

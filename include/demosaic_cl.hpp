@@ -17,13 +17,11 @@
 #define demosaic_cl_hpp
 
 #include "demosaic.hpp"
-
 #include "gls_cl_image.hpp"
 
 template <typename T1, typename T2>
 void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName,
-                 const gls::cl_image_2d<T1>& inputImage,
-                 gls::cl_image_2d<T2>* outputImage);
+                 const gls::cl_image_2d<T1>& inputImage, gls::cl_image_2d<T2>* outputImage);
 
 void scaleRawData(gls::OpenCLContext* glsContext,
                   const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
@@ -49,25 +47,24 @@ void interpolateRedBlue(gls::OpenCLContext* glsContext,
                         const gls::cl_image_2d<gls::luma_pixel_float>& greenImage,
                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                         gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-                        BayerPattern bayerPattern, gls::Vector<2> redVariance, gls::Vector<2> blueVariance);
+                        BayerPattern bayerPattern, gls::Vector<2> redVariance,
+                        gls::Vector<2> blueVariance);
 
 void interpolateRedBlueAtGreen(gls::OpenCLContext* glsContext,
                                const gls::cl_image_2d<gls::rgba_pixel_float>& rgbImageIn,
                                const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                                gls::cl_image_2d<gls::rgba_pixel_float>* rgbImageOut,
-                               BayerPattern bayerPattern, gls::Vector<2> redVariance, gls::Vector<2> blueVariance);
+                               BayerPattern bayerPattern, gls::Vector<2> redVariance,
+                               gls::Vector<2> blueVariance);
 
-void malvar(gls::OpenCLContext* glsContext,
-            const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void malvar(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
             const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-            gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-            BayerPattern bayerPattern, gls::Vector<2> redVariance,
-            gls::Vector<2> greenVariance, gls::Vector<2> blueVariance);
+            gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern,
+            gls::Vector<2> redVariance, gls::Vector<2> greenVariance, gls::Vector<2> blueVariance);
 
 void fasteDebayer(gls::OpenCLContext* glsContext,
                   const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                  gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-                  BayerPattern bayerPattern);
+                  gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern);
 
 template <typename T>
 void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName,
@@ -79,7 +76,8 @@ void subtractNoiseImage(gls::OpenCLContext* glsContext,
                         const gls::cl_image_2d<T>& inputImage1,
                         const gls::cl_image_2d<T>& inputImageDenoised1,
                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                        float luma_weight, float sharpening, const gls::Vector<2>& nlf, gls::cl_image_2d<T>* outputImage);
+                        float luma_weight, float sharpening, const gls::Vector<2>& nlf,
+                        gls::cl_image_2d<T>* outputImage);
 
 template <typename T>
 void subtractNoiseFusedImage(gls::OpenCLContext* glsContext,
@@ -113,9 +111,8 @@ void denoiseImage(gls::OpenCLContext* glsContext,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                   const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                   const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
-                  const gls::Vector<3> thresholdMultipliers,
-                  float chromaBoost, float gradientBoost, float gradientThreshold,
-                  gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
+                  const gls::Vector<3> thresholdMultipliers, float chromaBoost, float gradientBoost,
+                  float gradientThreshold, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
 void denoiseImageGuided(gls::OpenCLContext* glsContext,
                         const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
@@ -123,15 +120,13 @@ void denoiseImageGuided(gls::OpenCLContext* glsContext,
                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
 // Arrays order is LF, MF, HF
-void localToneMappingMask(gls::OpenCLContext* glsContext,
-                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                          const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage,
-                          const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abImage,
-                          const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abMeanImage,
-                          const LTMParameters& ltmParameters,
-                          const gls::Matrix<3, 3>& ycbcr_srgb,
-                          const gls::Vector<2>& nlf,
-                          gls::cl_image_2d<gls::luma_pixel_float>* outputImage);
+void localToneMappingMask(
+    gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+    const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage,
+    const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abImage,
+    const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abMeanImage,
+    const LTMParameters& ltmParameters, const gls::Matrix<3, 3>& ycbcr_srgb,
+    const gls::Vector<2>& nlf, gls::cl_image_2d<gls::luma_pixel_float>* outputImage);
 
 void denoiseLumaImage(gls::OpenCLContext* glsContext,
                       const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
@@ -140,13 +135,11 @@ void denoiseLumaImage(gls::OpenCLContext* glsContext,
 
 void bayerToRawRGBA(gls::OpenCLContext* glsContext,
                     const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                    gls::cl_image_2d<gls::rgba_pixel_float>* rgbaImage,
-                    BayerPattern bayerPattern);
+                    gls::cl_image_2d<gls::rgba_pixel_float>* rgbaImage, BayerPattern bayerPattern);
 
 void rawRGBAToBayer(gls::OpenCLContext* glsContext,
                     const gls::cl_image_2d<gls::rgba_pixel_float>& rgbaImage,
-                    gls::cl_image_2d<gls::luma_pixel_float>* rawImage,
-                    BayerPattern bayerPattern);
+                    gls::cl_image_2d<gls::luma_pixel_float>* rawImage, BayerPattern bayerPattern);
 
 void denoiseRawRGBAImage(gls::OpenCLContext* glsContext,
                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
@@ -175,11 +168,12 @@ void blueNoiseImage(gls::OpenCLContext* glsContext,
                     gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
 void blendHighlightsImage(gls::OpenCLContext* glsContext,
-                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                          float clip,
+                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, float clip,
                           gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
-YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& image, float exposure_multiplier);
+YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
+                         const gls::cl_image_2d<gls::rgba_pixel_float>& image,
+                         float exposure_multiplier);
 
 RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
                      const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
@@ -191,13 +185,12 @@ void clFuseFrames(gls::OpenCLContext* glsContext,
                   const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& previousFusedImage,
-                  const gls::Matrix<3, 3>& homography,
-                  const gls::Vector<3>& var_a, const gls::Vector<3>& var_b, int fusedFrames,
+                  const gls::Matrix<3, 3>& homography, const gls::Vector<3>& var_a,
+                  const gls::Vector<3>& var_b, int fusedFrames,
                   gls::cl_image_2d<gls::rgba_pixel_float>* newFusedImage);
 
 template <typename T>
-void clRescaleImage(gls::OpenCLContext* cLContext,
-                    const gls::cl_image_2d<T>& inputImage,
+void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& inputImage,
                     gls::cl_image_2d<T>* outputImage);
 
 #endif /* demosaic_cl_hpp */

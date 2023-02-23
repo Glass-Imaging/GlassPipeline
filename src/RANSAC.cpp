@@ -17,8 +17,8 @@
 
 #include <float.h>
 
-#include "gls_linalg.hpp"
 #include "gls_geometry.hpp"
+#include "gls_linalg.hpp"
 #include "homography.hpp"
 
 #define USE_RTL true
@@ -33,12 +33,13 @@ namespace gls {
 #if USE_RTL
 
 class HomographyEstimator : public RTL::Estimator<
-                                        /*MODEL=*/ gls::Matrix<3, 3>,
-                                        /*DATUM=*/ std::pair<Point2f, Point2f>,
-                                        /*DATA=*/  std::vector<std::pair<Point2f, Point2f>>> {
-public:
+                                /*MODEL=*/gls::Matrix<3, 3>,
+                                /*DATUM=*/std::pair<Point2f, Point2f>,
+                                /*DATA=*/std::vector<std::pair<Point2f, Point2f>>> {
+   public:
     // Calculate the mean of data at the sample indices
-    virtual gls::Matrix<3, 3> ComputeModel(const std::vector<std::pair<Point2f, Point2f>>& data, const std::set<int>& samples) {
+    virtual gls::Matrix<3, 3> ComputeModel(const std::vector<std::pair<Point2f, Point2f>>& data,
+                                           const std::set<int>& samples) {
         assert(samples.size() == 4);
 
         std::vector<Point2f> selectP1(4);
@@ -59,29 +60,35 @@ public:
     }
 
     // Calculate error between the mean and given datum
-    virtual float ComputeError(const gls::Matrix<3, 3>& homography, const std::pair<Point2f, Point2f>& datum) {
+    virtual float ComputeError(const gls::Matrix<3, 3>& homography,
+                               const std::pair<Point2f, Point2f>& datum) {
         const auto p1t = applyHomography(datum.first, homography);
         const auto diff = gls::Vector<2>(p1t - datum.second);
         return dot(diff, diff);
     }
 };
 
-gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold, int max_iterations, std::vector<int>* inlier_indices) {
+gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints,
+                         float threshold, int max_iterations, std::vector<int>* inlier_indices) {
     HomographyEstimator estimator;
 #if USE_MLESAC
-    RTL::MLESAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>> > ransac(&estimator);
+    RTL::MLESAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>,
+                std::vector<std::pair<Point2f, Point2f>>>
+        ransac(&estimator);
 #else
-    RTL::RANSAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>> > ransac(&estimator);
+    RTL::RANSAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>,
+                std::vector<std::pair<Point2f, Point2f>>>
+        ransac(&estimator);
 #endif
     gls::Matrix<3, 3> model;
     ransac.SetParamThreshold(threshold);
     ransac.SetParamIteration(max_iterations);
-    const auto ransac_loss = ransac.FindBest(model, matchpoints, (int) matchpoints.size(), 4);
+    const auto ransac_loss = ransac.FindBest(model, matchpoints, (int)matchpoints.size(), 4);
 
     std::cout << "RTL RANSAC loss: " << ransac_loss << std::endl;
 
     // Refine RANSAC projection matrix parameters using the best interior points
-    const auto inliers = ransac.FindInliers(model, matchpoints, (int) matchpoints.size());
+    const auto inliers = ransac.FindInliers(model, matchpoints, (int)matchpoints.size());
     std::cout << "RANSAC found " << inliers.size() << " inliers" << std::endl;
 
     if (!inliers.empty()) {
@@ -111,7 +118,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
 
 #else
 
-gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold, int max_iterations, std::vector<int>* inlier_indices) {
+gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints,
+                         float threshold, int max_iterations, std::vector<int>* inlier_indices) {
     assert(matchpoints.size() > 0);
 
     // Calculate the maximum set of interior points
@@ -121,7 +129,7 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
     std::vector<int> innerPvInd_i;
     std::vector<std::array<int, 4>> selectIndex(max_iterations);
 
-    srand((unsigned) time(NULL));  // Use time as seed, each time the random number is different
+    srand((unsigned)time(NULL));  // Use time as seed, each time the random number is different
     int pCount = (int)matchpoints.size();
 
     // generate random table
@@ -130,7 +138,7 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
             int ii = 0;
             int temp = 0;
             selectIndex[i][0] = selectIndex[i][1] = selectIndex[i][2] = selectIndex[i][3] =
-            pCount + 1;
+                pCount + 1;
             while (ii < 4) {
                 temp = rand() % pCount;
                 if (temp != selectIndex[i][0] && temp != selectIndex[i][1] &&
@@ -160,8 +168,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
         try {
             homography = findHomography(selectP1, selectP2);
 
-            // Calculate the model parameter error, if the error is greater than the threshold, discard
-            // this set of model parameters
+            // Calculate the model parameter error, if the error is greater than the threshold,
+            // discard this set of model parameters
             int innerP = 0;
             for (int i = 0; i < matchpoints.size(); i++) {
                 const auto& p = matchpoints[i];
@@ -192,7 +200,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
                 else {
                     float num = log(num_);
                     float denom = log(denom_);
-                    iters = (denom >= 0 || -num >= max_iterations * (-denom) ? max_iterations : (int)(num / denom));
+                    iters = (denom >= 0 || -num >= max_iterations * (-denom) ? max_iterations
+                                                                             : (int)(num / denom));
                     std::cout << "Updated iters to " << iters << std::endl;
                 }
             }
@@ -202,7 +211,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
         }
     }
 
-    printf(" RANSAC interior point ratio - number of loops: %d %ld %d \t\n ", max_innerP, matchpoints.size(), k);
+    printf(" RANSAC interior point ratio - number of loops: %d %ld %d \t\n ", max_innerP,
+           matchpoints.size(), k);
 
     if (!innerPvInd_i.empty()) {
         // Copy out the inliers
@@ -233,4 +243,4 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
 
 #endif
 
-} // namespace gls
+}  // namespace gls
