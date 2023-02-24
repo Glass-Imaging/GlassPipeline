@@ -1774,11 +1774,11 @@ kernel void laplacianFilterImage(read_only image2d_t inputImage, write_only imag
     }                                                                                                         \
                                                                                                               \
     base_type __attribute__((overloadable)) Skewness(STATS_##base_type* stats) {                              \
-        return sqrt(float(stats->n)) * stats->M3 / pow(stats->M2, 1.5);                                       \
+        return sqrt((float)(stats->n)) * stats->M3 / pow(stats->M2, 1.5);                                       \
     }                                                                                                         \
                                                                                                               \
     base_type __attribute__((overloadable)) Kurtosis(STATS_##base_type* stats) {                              \
-        return float(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0;                                   \
+        return (float)(stats->n) * stats->M4 / (stats->M2 * stats->M2) - 3.0;                                   \
     }
 
 DECLARE_STATS(float3)
