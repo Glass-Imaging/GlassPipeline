@@ -37,7 +37,7 @@ public:
     gls::image<gls::rgb_pixel>::unique_ptr calibrate(RawConverter* rawConverter,
                                                      const std::filesystem::path& input_path,
                                                      DemosaicParameters* demosaicParameters,
-                                                     int iso, const gls::rectangle& gmb_position) const;
+                                                     int iso, const gls::rectangle* gmb_position) const;
 
     std::unique_ptr<DemosaicParameters> getDemosaicParameters(const gls::image<gls::luma_pixel_16>& inputImage,
                                                               gls::tiff_metadata* dng_metadata,

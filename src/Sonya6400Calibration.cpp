@@ -169,13 +169,13 @@ public:
                 }
             };
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, entry.gmb_position);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, /* &entry.gmb_position */ nullptr);
             rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/ true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        LOG_INFO(TAG) << "// iPhone 11 Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// Sonya6400 Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };
