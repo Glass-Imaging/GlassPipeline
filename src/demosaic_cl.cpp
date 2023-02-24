@@ -22,8 +22,10 @@
 
 #include "gls_cl.hpp"
 #include "gls_cl_image.hpp"
-
 #include "gls_statistics.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 /*
  OpenCL RAW Image Demosaic.
@@ -564,25 +566,20 @@ void localToneMappingMask(gls::OpenCLContext* glsContext,
                                        cl::Sampler      // linear_sampler
                                        >(program, "localToneMappingMaskImage");
 
-    try {
-        // Schedule the kernel on the GPU
-        for (int i = 0; i < 3; i++) {
-            if (i == 0 || ltmParameters.detail[i] != 1) {
-                gfKernel(gls::OpenCLContext::buildEnqueueArgs(guideImage[i]->width, guideImage[i]->height),
-                         guideImage[i]->getImage2D(), abImage[i]->getImage2D(), ltmParameters.eps, linear_sampler);
+    // Schedule the kernel on the GPU
+    for (int i = 0; i < 3; i++) {
+        if (i == 0 || ltmParameters.detail[i] != 1) {
+            gfKernel(gls::OpenCLContext::buildEnqueueArgs(guideImage[i]->width, guideImage[i]->height),
+                     guideImage[i]->getImage2D(), abImage[i]->getImage2D(), ltmParameters.eps, linear_sampler);
 
-                gfMeanKernel(gls::OpenCLContext::buildEnqueueArgs(abImage[i]->width, abImage[i]->height),
-                             abImage[i]->getImage2D(), abMeanImage[i]->getImage2D(), linear_sampler);
-            }
+            gfMeanKernel(gls::OpenCLContext::buildEnqueueArgs(abImage[i]->width, abImage[i]->height),
+                         abImage[i]->getImage2D(), abMeanImage[i]->getImage2D(), linear_sampler);
         }
-
-        ltmKernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-                  inputImage.getImage2D(), abMeanImage[0]->getImage2D(), abMeanImage[1]->getImage2D(), abMeanImage[2]->getImage2D(), outputImage->getImage2D(),
-                  ltmParameters, cl_ycbcr_srgb, { nlf[0], nlf[1] }, linear_sampler);
-    } catch (cl::Error& e) {
-        std::cout << "Error: " << e.what() << " - " << gls::clStatusToString(e.err()) << std::endl;
-        throw std::logic_error("This is bad");
     }
+
+    ltmKernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
+              inputImage.getImage2D(), abMeanImage[0]->getImage2D(), abMeanImage[1]->getImage2D(), abMeanImage[2]->getImage2D(), outputImage->getImage2D(),
+              ltmParameters, cl_ycbcr_srgb, { nlf[0], nlf[1] }, linear_sampler);
 }
 
 void bayerToRawRGBA(gls::OpenCLContext* glsContext,
@@ -673,20 +670,20 @@ std::vector<std::array<float, 3>> gaussianKernelBilinearWeights(float radius) {
             weights[i] = exp(-((float)(x * x + y * y) / (2 * radius * radius)));
         }
     }
-//    std::cout << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
+//    LOG_INFO(TAG) << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
 //    for (const auto& w : weights) {
-//        std::cout << std::setprecision(4) << std::scientific << w << ", ";
+//        LOG_INFO(TAG) << std::setprecision(4) << std::scientific << w << ", ";
 //    }
-//    std::cout << std::endl;
+//    LOG_INFO(TAG) << std::endl;
 
     const int outWidth = kernelSize / 2 + 1;
     const int weightsCount = outWidth * outWidth;
     std::vector<std::array<float, 3>> weightsOut(weightsCount);
     KernelOptimizeBilinear2d(kernelSize, weights, &weightsOut);
 
-//    std::cout << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
+//    LOG_INFO(TAG) << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
 //    for (const auto& [w, x, y] : weightsOut) {
-//        std::cout << w << " @ (" << x << " : " << y << "), " << std::endl;
+//        LOG_INFO(TAG) << w << " @ (" << x << " : " << y << "), " << std::endl;
 //    }
 
     return weightsOut;
@@ -872,7 +869,7 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
     });
     err2 /= N;
 
-//    std::cout << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
+//    LOG_INFO(TAG) << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
 //              << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels"<< std::endl;
 
     // Update the maximum variance with the model
@@ -916,11 +913,11 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
         nlfB = max((N * s_xy - s_x * s_y) / (N * s_xx - s_x * s_x), 1e-8);
         nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
 
-        std::cout << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+        LOG_INFO(TAG) << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
+                      << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
     } else {
-        std::cout << "*** WARNING *** Pyramid NLF second iteration is worse: MSE: " << sqrt(newErr2)
-                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+        LOG_INFO(TAG) << "*** WARNING *** Pyramid NLF second iteration is worse: MSE: " << sqrt(newErr2)
+                      << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
     }
 
     // assert(all(newErr2 < err2));
@@ -1062,7 +1059,7 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
         model.a = max(model.a, 1e-8f);
         model.b = max(model.b, 1e-8f);
 
-        std::cout << "Estimated line model a: " << std::setprecision(4) << std::scientific << model.a << ", b: " << model.b << " with loss " << loss << std::endl;
+        LOG_INFO(TAG) << "Estimated line model a: " << std::setprecision(4) << std::scientific << model.a << ", b: " << model.b << " with loss " << loss << std::endl;
 
         return std::pair (
             model.a, // A values
@@ -1125,8 +1122,8 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     });
     err2 /= N;
 
-    std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
+                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
 
     // Update the maximum variance with the model
     varianceMax = nlfB;
@@ -1169,8 +1166,8 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
 
     assert(all(newErr2 < err2));
 
-    std::cout << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-              << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
+                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
 
     meanImage.unmapImage(meanImageCpu);
     varImage.unmapImage(varImageCpu);

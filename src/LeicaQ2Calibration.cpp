@@ -19,6 +19,10 @@
 #include <cmath>
 #include <filesystem>
 
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
+
 template <size_t levels = 5>
 class LeicaQ2Calibration : public CameraCalibration<levels> {
     static const std::array<NoiseModel<levels>, 10> NLFData;
@@ -59,7 +63,7 @@ public:
     std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
         const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
-        std::cout << "LeicaQ2 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
+        LOG_INFO(TAG) << "LeicaQ2 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
         float lerp = 0.5 * std::lerp(0.125f, 2.0f, nlf_alpha);
         float lerp_c = std::lerp(0.5f, 2.0f, nlf_alpha);
@@ -158,7 +162,7 @@ public:
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        std::cout << "// Canon EOR RP Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// Canon EOR RP Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };

@@ -15,13 +15,16 @@
 
 #include "CameraCalibration.hpp"
 
-#include "demosaic.hpp"
-#include "demosaic_cl.hpp"
-#include "raw_converter.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
+
+#include "demosaic.hpp"
+#include "demosaic_cl.hpp"
+#include "raw_converter.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 template <size_t levels = 5>
 class iPhone11Calibration : public CameraCalibration<levels> {
@@ -57,7 +60,7 @@ public:
 //    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParametersPlain(int iso) const override {
 //        const float nlf_alpha = std::clamp((log2(iso) - log2(20)) / (log2(3200) - log2(20)), 0.0, 1.0);
 //
-//        std::cout << "iPhone11 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
+//        LOG_INFO(TAG) << "iPhone11 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 //
 //        float lerp = std::lerp(0.125f, 1.2f, nlf_alpha);
 //        float lerp_c = std::lerp(0.5f, 1.2f, nlf_alpha);
@@ -113,7 +116,7 @@ public:
     std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
         const float nlf_alpha = std::clamp((log2(iso) - log2(20)) / (log2(3200) - log2(20)), 0.0, 1.0);
 
-        std::cout << "iPhone11 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
+        LOG_INFO(TAG) << "iPhone11 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
         float lerp = std::lerp(0.125f, 1.2f, nlf_alpha);
         float lerp_c = std::lerp(0.5f, 1.2f, nlf_alpha);
@@ -215,7 +218,7 @@ public:
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        std::cout << "// iPhone 11 Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// iPhone 11 Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };

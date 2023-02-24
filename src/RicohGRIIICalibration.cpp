@@ -15,12 +15,15 @@
 
 #include "CameraCalibration.hpp"
 
-#include "demosaic.hpp"
-#include "raw_converter.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
+
+#include "demosaic.hpp"
+#include "raw_converter.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 template <size_t levels = 5>
 class RicohGRIIICalibration : public CameraCalibration<levels> {
@@ -53,7 +56,7 @@ public:
     std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
         const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(6400) - log2(100)), 0.0, 1.0);
 
-        std::cout << "RicohGRIIIDenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
+        LOG_INFO(TAG) << "RicohGRIIIDenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
         float lerp = std::lerp(0.125f, 1.2f, nlf_alpha);
         float lerp_c = std::lerp(0.5f, 1.2f, nlf_alpha);
@@ -143,7 +146,7 @@ public:
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        std::cout << "// RicohGRIII Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// RicohGRIII Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };

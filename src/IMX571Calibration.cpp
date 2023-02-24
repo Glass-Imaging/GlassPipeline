@@ -20,6 +20,9 @@
 #include <filesystem>
 
 #include "demosaic.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 template <size_t levels = 5>
 class IMX571Calibration : public CameraCalibration<levels> {
@@ -64,7 +67,7 @@ public:
     std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
         const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
-        std::cout << "IMX571 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
+        LOG_INFO(TAG) << "IMX571 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
         float lerp = std::lerp(0.125f, 2.0f, nlf_alpha);
         float lerp_c = std::lerp(0.5f, 2.0f, nlf_alpha);
@@ -170,7 +173,7 @@ public:
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        std::cout << "// iPhone 11 Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// iPhone 11 Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };

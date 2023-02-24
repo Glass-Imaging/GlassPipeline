@@ -27,6 +27,9 @@
 #if USE_RTL
 #include "RTL/RTL.hpp"
 #endif
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 namespace gls {
 
@@ -53,7 +56,7 @@ public:
         try {
             return findHomography(selectP1, selectP2);
         } catch (const std::range_error& e) {
-            std::cout << "Couldn't find homography: " << e.what() << std::endl;
+            LOG_ERROR(TAG) << "Couldn't find homography: " << e.what() << std::endl;
             return gls::Matrix<3, 3>::identity();
         }
     }
@@ -78,11 +81,11 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
     ransac.SetParamIteration(max_iterations);
     const auto ransac_loss = ransac.FindBest(model, matchpoints, (int) matchpoints.size(), 4);
 
-    std::cout << "RTL RANSAC loss: " << ransac_loss << std::endl;
+    LOG_INFO(TAG) << "RTL RANSAC loss: " << ransac_loss << std::endl;
 
     // Refine RANSAC projection matrix parameters using the best interior points
     const auto inliers = ransac.FindInliers(model, matchpoints, (int) matchpoints.size());
-    std::cout << "RANSAC found " << inliers.size() << " inliers" << std::endl;
+    LOG_INFO(TAG) << "RANSAC found " << inliers.size() << " inliers" << std::endl;
 
     if (!inliers.empty()) {
         // Copy out the inliers
@@ -102,7 +105,7 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
             try {
                 model = findHomography(p1, p2);
             } catch (const std::range_error& e) {
-                std::cout << "Couldn't find homography: " << e.what() << std::endl;
+                LOG_INFO(TAG) << "Couldn't find homography: " << e.what() << std::endl;
             }
         }
     }
@@ -193,21 +196,21 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
                     float num = log(num_);
                     float denom = log(denom_);
                     iters = (denom >= 0 || -num >= max_iterations * (-denom) ? max_iterations : (int)(num / denom));
-                    std::cout << "Updated iters to " << iters << std::endl;
+                    LOG_INFO(TAG) << "Updated iters to " << iters << std::endl;
                 }
             }
             innerPvInd.clear();
         } catch (const std::range_error& e) {
-            std::cout << "Couldn't find homography: " << e.what() << std::endl;
+            LOG_INFO(TAG) << "Couldn't find homography: " << e.what() << std::endl;
         }
     }
 
-    printf(" RANSAC interior point ratio - number of loops: %d %ld %d \t\n ", max_innerP, matchpoints.size(), k);
+    LOG_INFO(TAG) << " RANSAC interior point ratio - number of loops: " << max_innerP << ", " << matchpoints.size() << ", " << k << std::endl;
 
     if (!innerPvInd_i.empty()) {
         // Copy out the inliers
         if (inlier_indices && !innerPvInd_i.empty()) {
-            std::cout << "RANSAC found " << innerPvInd_i.size() << " inliers" << std::endl;
+            LOG_INFO(TAG) << "RANSAC found " << innerPvInd_i.size() << " inliers" << std::endl;
 
             inlier_indices->resize(innerPvInd_i.size());
             std::copy(innerPvInd_i.begin(), innerPvInd_i.end(), inlier_indices->begin());
@@ -224,7 +227,7 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
             try {
                 homography = findHomography(_p1, _p2);
             } catch (const std::range_error& e) {
-                std::cout << "Couldn't find homography: " << e.what() << std::endl;
+                LOG_INFO(TAG) << "Couldn't find homography: " << e.what() << std::endl;
             }
         }
     }

@@ -22,6 +22,9 @@
 #include "gls_color_science.hpp"
 #include "gls_image.hpp"
 #include "ThreadPool.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 gls::Matrix<3, 3> cam_xyz_coeff(gls::Vector<3>* pre_mul, const gls::Matrix<3, 3>& cam_xyz) {
     // Compute sRGB -> XYZ -> Camera
@@ -135,8 +138,8 @@ void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats, gls::
     *cam_xyz = *cam_xyz / ((*cam_xyz)[1][0] + (*cam_xyz)[1][1] + (*cam_xyz)[1][2]);
     *pre_mul = *pre_mul / (*pre_mul)[1];
 
-    std::cout << "ColorChecker Color Matrix: " << std::fixed << std::setw(6) << std::setprecision(4) << cam_xyz->span() << std::endl;
-    std::cout << "ColorChecker White Point: " << std::fixed << std::setw(6) << std::setprecision(4) << *pre_mul << std::endl;
+    LOG_INFO(TAG) << "ColorChecker Color Matrix: " << std::fixed << std::setw(6) << std::setprecision(4) << cam_xyz->span() << std::endl;
+    LOG_INFO(TAG) << "ColorChecker White Point: " << std::fixed << std::setw(6) << std::setprecision(4) << *pre_mul << std::endl;
 }
 
 void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bayerPattern, uint32_t black, std::array<gls::rectangle, 24> gmb_samples) {
@@ -227,12 +230,7 @@ void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bay
     }
 
     float norm = 1 / (cam_xyz[1][0] + cam_xyz[1][1] + cam_xyz[1][2]);
-    printf("DCRaw Color Matrix: ");
-    for (int c = 0; c < 3; c++) {
-        for (int j = 0; j < 3; j++)
-            printf("%.4f, ", cam_xyz[c][j] * norm);
-    }
-    printf("\n");
+    LOG_INFO(TAG) << "DCRaw Color Matrix:\n" << cam_xyz << std::endl;
 }
 
 void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3>* wb_mul, uint32_t white, uint32_t black, BayerPattern bayerPattern) {
@@ -290,12 +288,12 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
     const auto& color_matrix = color_matrix2.empty() ? color_matrix1 : color_matrix2;
 
     auto as_shot_neutral = getVector<float>(*dng_metadata, TIFFTAG_ASSHOTNEUTRAL);
-    std::cout << "as_shot_neutral: " << gls::Vector<3>(as_shot_neutral) << std::endl;
+    LOG_INFO(TAG) << "as_shot_neutral: " << gls::Vector<3>(as_shot_neutral) << std::endl;
 
     float baseline_exposure = 0;
     getValue(*dng_metadata, TIFFTAG_BASELINEEXPOSURE, &baseline_exposure);
     float exposure_multiplier = pow(2.0, baseline_exposure);
-    std::cout << "baseline_exposure: " << baseline_exposure  << ", exposure_multiplier: " << exposure_multiplier << std::endl;
+    LOG_INFO(TAG) << "baseline_exposure: " << baseline_exposure  << ", exposure_multiplier: " << exposure_multiplier << std::endl;
 
     const auto black_level_vec = getVector<float>(*dng_metadata, TIFFTAG_BLACKLEVEL);
     const auto white_level_vec = getVector<uint32_t>(*dng_metadata, TIFFTAG_WHITELEVEL);
@@ -310,7 +308,7 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
                                      : std::memcmp(cfa_pattern.data(), "\01\00\02\01", 4) == 0 ? BayerPattern::grbg
                                      : BayerPattern::gbrg;
 
-    std::cout << "bayerPattern: " << BayerPatternName[demosaicParameters->bayerPattern] << std::endl;
+    LOG_INFO(TAG) << "bayerPattern: " << BayerPatternName[demosaicParameters->bayerPattern] << std::endl;
 
     gls::Vector<3> pre_mul;
     gls::Matrix<3, 3> cam_xyz;
@@ -334,8 +332,8 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
         }
     }
 
-    std::cout << "cam_xyz: " << std::fixed << std::setprecision(4) << cam_xyz.span() << std::endl;
-    std::cout << "*** pre_mul: " << pre_mul / pre_mul[1] << std::endl;
+    LOG_INFO(TAG) << "cam_xyz: " << std::fixed << std::setprecision(4) << cam_xyz.span() << std::endl;
+    LOG_INFO(TAG) << "*** pre_mul: " << pre_mul / pre_mul[1] << std::endl;
 
     if (auto_white_balance) {
         auto minmax = std::minmax_element(std::begin(pre_mul), std::end(pre_mul));
@@ -350,11 +348,11 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
                                                   demosaicParameters->black_level, demosaicParameters->bayerPattern,
                                                   highlights);
 
-        printf("Auto White Balance: %f, %f, %f\n", cam_mul[0], cam_mul[1], cam_mul[2]);
+        LOG_INFO(TAG) << "Auto White Balance: " << cam_mul << std::endl;
 
         // Convert cam_mul from camera to XYZ
         const auto cam_mul_xyz = cam_xyz * cam_mul;
-        std::cout << "cam_mul_xyz: " << cam_mul_xyz << ", CCT: " << XYZtoCorColorTemp(cam_mul_xyz) << std::endl;
+        LOG_INFO(TAG) << "cam_mul_xyz: " << cam_mul_xyz << ", CCT: " << XYZtoCorColorTemp(cam_mul_xyz) << std::endl;
 
         for (int c = 0; c < 3; c++) {
             as_shot_neutral[c] = 1 / cam_mul[c];
@@ -363,7 +361,7 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
 
         pre_mul = cam_mul;
 
-        std::cout << "*** auto_white_balance pre_mul: " << pre_mul / pre_mul[1] << std::endl;
+        LOG_INFO(TAG) << "*** auto_white_balance pre_mul: " << pre_mul / pre_mul[1] << std::endl;
     }
 
     // Scale Input Image
@@ -372,7 +370,7 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
         int pre_mul_idx = c == 3 ? 1 : c;
         (demosaicParameters->scale_mul)[c] = std::max(exposure_multiplier, 1.0f) * (pre_mul[pre_mul_idx] / *minmax.first) * 65535.0 / (demosaicParameters->white_level - demosaicParameters->black_level);
     }
-    printf("scale_mul: %f, %f, %f, %f\n", (demosaicParameters->scale_mul)[0], (demosaicParameters->scale_mul)[1], (demosaicParameters->scale_mul)[2], (demosaicParameters->scale_mul)[3]);
+    LOG_INFO(TAG) << "scale_mul: " << demosaicParameters->scale_mul << std::endl;
 
     return exposure_multiplier;
 }
@@ -425,7 +423,7 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
 
 //    gls::image<gls::luma_pixel_16>* zapMama = (gls::image<gls::luma_pixel_16> *) &rawImage;
 
-    std::cout << "colorCheckerRawStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
+    LOG_INFO(TAG) << "colorCheckerRawStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
 
     int patch_width = gmb_position.width / 6;
     int patch_height = gmb_position.height / 4;
@@ -522,7 +520,7 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
     }
 
 //    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
-//        std::cout << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
+//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
 //                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] << ", " << (*stats)[patchIdx].mean[2] << ", " << (*stats)[patchIdx].mean[3] << "}, var: {"
 //                                          << (*stats)[patchIdx].variance[0] << ", " << (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2] << ", " << (*stats)[patchIdx].variance[3] << "}" << std::endl;
 //
@@ -537,7 +535,7 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
 
 // Collect mean and variance of ColorChecker patches
 void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rectangle& gmb_position, bool rotate_180, std::array<PatchStats, 24>* stats) {
-    // std::cout << "colorCheckerStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
+    // LOG_INFO(TAG) << "colorCheckerStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
 
     int patch_width = gmb_position.width / 6;
     int patch_height = gmb_position.height / 4;
@@ -598,7 +596,7 @@ void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rect
     }
 
 //    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
-//        std::cout << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
+//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
 //                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] << ", " << (*stats)[patchIdx].mean[2] << "}, var: {"
 //                                          << (*stats)[patchIdx].variance[0] << ", " << (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2] << "}" << std::endl;
 //    }
@@ -667,9 +665,9 @@ gls::Vector<3> estimateNlfParameters(gls::image<gls::rgba_pixel_float>* image, c
         stats[White].variance[2]
     };
 
-//    std::cout << "NLF Stats:" << std::endl;
+//    LOG_INFO(TAG) << "NLF Stats:" << std::endl;
 //    for (int patch = Black; patch >= White; patch--) {
-//        std::cout << std::setw(12) << std::setfill(' ') << GMBColorNames[patch] << ": " << std::setprecision(4) << std::scientific << stats[patch].mean[0] << ", "
+//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patch] << ": " << std::setprecision(4) << std::scientific << stats[patch].mean[0] << ", "
 //                  << stats[patch].variance[0] << ", " << stats[patch].variance[1] << ", " << stats[patch].variance[2] << std::endl;
 //    }
 
@@ -678,9 +676,9 @@ gls::Vector<3> estimateNlfParameters(gls::image<gls::rgba_pixel_float>* image, c
     auto nlf_cb = std::accumulate(cb_variance.begin(), cb_variance.end(), 0.0f) / cb_variance.size();
     auto nlf_cr = std::accumulate(cr_variance.begin(), cr_variance.end(), 0.0f) / cr_variance.size();
 
-    std::cout << std::setprecision(4) << std::scientific
-              << "\nnlf_y: " << nlf_y.first << ":" << nlf_y.second << " (" << y_err2 << ")"
-              << ", nlf_cb: " << nlf_cb << ", nlf_cr: " << nlf_cr << std::endl;
+    LOG_INFO(TAG) << std::setprecision(4) << std::scientific
+                  << "\nnlf_y: " << nlf_y.first << ":" << nlf_y.second << " (" << y_err2 << ")"
+                  << ", nlf_cb: " << nlf_cb << ", nlf_cr: " << nlf_cr << std::endl;
 
     // NFL for Y passes by 0, just use the slope, NFL for Cb and and Cr is mostly flat, just return the average
     return {nlf_y.second, nlf_cb, nlf_cr};
@@ -772,17 +770,17 @@ RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage, gls
     auto nlf_b = linear_regression(blue_intensity, blue_variance, &b_err2);
     auto nlf_g2 = linear_regression(green2_intensity, green2_variance, &g2_err2);
 
-//    std::cout << std::setprecision(2) << std::scientific
-//              << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << r_err2 << "), "
-//              << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << g_err2 << "), "
-//              << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << b_err2 << "), "
-//              << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << g2_err2 << ")" << std::endl;
+//    LOG_INFO(TAG) << std::setprecision(2) << std::scientific
+//                  << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << r_err2 << "), "
+//                  << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << g_err2 << "), "
+//                  << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << b_err2 << "), "
+//                  << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << g2_err2 << ")" << std::endl;
 
-    std::cout << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): "
-              << nlf_r.second << ", "
-              << nlf_g.second << ", "
-              << nlf_b.second << ", "
-              << nlf_g2.second << std::endl;
+    LOG_INFO(TAG) << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): "
+                  << nlf_r.second << ", "
+                  << nlf_g.second << ", "
+                  << nlf_b.second << ", "
+                  << nlf_g2.second << std::endl;
 
     return { { nlf_r.first, nlf_g.first, nlf_b.first, nlf_g2.first }, { nlf_r.second, nlf_g.second, nlf_b.second, nlf_g2.second } };
 }
@@ -795,7 +793,7 @@ gls::Vector<3> extractNlfFromColorChecker(gls::image<gls::rgba_pixel_float>* yCb
         (int) round(gmb_position.height / (float) scale)
     };
     gls::Vector<3> nlf_parameters = estimateNlfParameters(yCbCrImage, position, rotate_180);
-    std::cout << "Scale " << scale << " nlf parameters: " << std::setprecision(4) << std::scientific << nlf_parameters[0] << ", " << nlf_parameters[1] << ", " << nlf_parameters[2] << std::endl;
+    LOG_INFO(TAG) << "Scale " << scale << " nlf parameters: " << std::setprecision(4) << std::scientific << nlf_parameters[0] << ", " << nlf_parameters[1] << ", " << nlf_parameters[2] << std::endl;
 
 //    gls::image<gls::rgb_pixel> output(yCbCrImage->width, yCbCrImage->height);
 //    for (int y = 0; y < output.height; y++) {
@@ -1023,7 +1021,7 @@ gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage, 
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
     const auto diff = lenght(wbGain - scale_mul);
-    std::cout << "wbGain: " << wbGain << ", wbGain - scale_mul: " << wbGain - scale_mul << ", diffLen: " << diff << ", highlightPixels: " << highlightPixels << ", execution time: " << elapsed_time_ms << "ms." << std::endl;
+    LOG_INFO(TAG) << "wbGain: " << wbGain << ", wbGain - scale_mul: " << wbGain - scale_mul << ", diffLen: " << diff << ", highlightPixels: " << highlightPixels << ", execution time: " << elapsed_time_ms << "ms." << std::endl;
 
     return wbGain;
 }

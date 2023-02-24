@@ -17,6 +17,10 @@
 
 #include <iomanip>
 
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
+
 template <size_t levels>
 PyramidProcessor<levels>::PyramidProcessor(gls::OpenCLContext* glsContext, int _width, int _height) : width(_width), height(_height), fusedFrames(0) {
     for (int i = 0, scale = 2; i < levels-1; i++, scale *= 2) {
@@ -98,7 +102,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
 
         if (i < levels - 1) {
             // Subtract the previous layer's noise from the current one
-            // std::cout << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
+            // LOG_INFO(TAG) << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
 
             const auto np = YCbCrNLF {(*nlfParameters)[i].first * thresholdMultipliers[i], (*nlfParameters)[i].second * thresholdMultipliers[i]};
             subtractNoiseImage(glsContext, *denoiseInput,
@@ -111,7 +115,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
                                subtractedImagePyramid[i].get());
         }
 
-        // std::cout << "Denoising image level " << i << " with multipliers " << thresholdMultipliers[i] << std::endl;
+        // LOG_INFO(TAG) << "Denoising image level " << i << " with multipliers " << thresholdMultipliers[i] << std::endl;
 
         // Denoise current layer
         denoiseImage(glsContext, i < levels - 1 ? *(subtractedImagePyramid[i]) :  *denoiseInput, *gradientInput,
@@ -140,10 +144,10 @@ void PyramidProcessor<levels>::fuseFrame(gls::OpenCLContext* glsContext,
                                          const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                                          std::array<YCbCrNLF, levels>* nlfParameters,
                                          float exposure_multiplier, bool calibrateFromImage) {
-    std::cout << "Fusing frame " << fusedFrames << std::endl;
+    LOG_INFO(TAG) << "Fusing frame " << fusedFrames << std::endl;
 
     if (fusionImagePyramidA[0] == nullptr) {
-        std::cout << "Allocating fusionImagePyramid" << std::endl;
+        LOG_INFO(TAG) << "Allocating fusionImagePyramid" << std::endl;
         for (int i = 0, scale = 1; i < levels; i++, scale *= 2) {
             fusionImagePyramidA[i] = std::make_unique<imageType>(glsContext->clContext(), width/scale, height/scale);
             fusionImagePyramidB[i] = std::make_unique<imageType>(glsContext->clContext(), width/scale, height/scale);
@@ -198,7 +202,7 @@ void PyramidProcessor<levels>::fuseFrame(gls::OpenCLContext* glsContext,
 
             if (i < levels - 1) {
                 // Subtract the previous layer's noise from the current one
-                std::cout << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
+                LOG_INFO(TAG) << "Reassembling layer " << i + 1 << " with sharpening: " << (*denoiseParameters)[i].sharpening << std::endl;
 
                 // TODO: The reference image should be the first frame and not be the fused pyramid
                 subtractNoiseFusedImage(glsContext, *currentLayer,
