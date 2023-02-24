@@ -19,9 +19,6 @@
 
 #include "demosaic_cl.hpp"
 #include "raw_converter.hpp"
-
-// #include "guided_filter.hpp"
-
 #include "gls_logging.h"
 
 static const char* TAG = "CLImage Pipeline";

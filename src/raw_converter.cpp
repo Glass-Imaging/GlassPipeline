@@ -21,7 +21,7 @@
 #include "demosaic.hpp"
 #include "gls_logging.h"
 
-static const char* TAG = "RAW Converter";
+static const char* TAG = "DEMOSAIC";
 
 #define PRINT_EXECUTION_TIME true
 
@@ -203,11 +203,10 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(
 
     const bool high_noise_image = rawVariance[1][1] > kHighNoiseVariance;
 
-    // std::cout << "Green Channel RAW Variance: " << std::scientific << rawVariance[1][1] << ",
-    // high_noise_image: " << high_noise_image << std::endl;
+    LOG_INFO(TAG) << "Green Channel RAW Variance: " << std::scientific << rawVariance[1][1] << ", high_noise_image: " << high_noise_image << std::endl;
 
     if (high_noise_image) {
-        // std::cout << "Despeckeling RAW Image" << std::endl;
+        LOG_INFO(TAG) << "Despeckeling RAW Image" << std::endl;
 
         allocateHighNoiseTextures(_glsContext, rawImage.width, rawImage.height);
 
@@ -278,8 +277,7 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::denoise(
     if (clBlueNoise != nullptr) {
         const gls::Vector<2> lumaVariance = {np.first[0], np.second[0]};
 
-        // std::cout << "Adding Blue Noise for variance: " << std::scientific << lumaVariance <<
-        // std::endl;
+        LOG_INFO(TAG) << "Adding Blue Noise for variance: " << std::scientific << lumaVariance << std::endl;
 
         const auto grainAmount = 1 + 3 * smoothstep(4e-4, 6e-4, lumaVariance[1]);
 
@@ -328,8 +326,7 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::runPipeline(
     // Convert linear image to YCbCr for denoising
     const auto cam_to_ycbcr = cam_ycbcr(demosaicParameters->rgb_cam);
 
-    // std::cout << "cam_to_ycbcr: " << std::setprecision(4) << std::scientific <<
-    // cam_to_ycbcr.span() << std::endl;
+    LOG_INFO(TAG) << "cam_to_ycbcr: " << std::setprecision(4) << std::scientific << cam_to_ycbcr.span() << std::endl;
 
     transformImage(_glsContext, *demosaicedImage, clLinearRGBImageA.get(), cam_to_ycbcr);
 

@@ -18,17 +18,13 @@
 #include <cmath>
 #include <chrono>
 
-#include "gls_logging.h"
 #include "gls_image.hpp"
-
 #include "raw_converter.hpp"
-
 #include "demosaic.hpp"
 #include "gls_tiff_metadata.hpp"
-
 #include "gls_linalg.hpp"
-
 #include "CameraCalibration.hpp"
+#include "gls_logging.h"
 
 static const char* TAG = "RawPipeline Test";
 
@@ -254,7 +250,7 @@ void demosaicDirectory(RawConverter* rawConverter, std::filesystem::path input_p
 }
 
 int main(int argc, const char* argv[]) {
-    printf("RawPipeline Test!\n");
+    LOG_INFO(TAG) << "RawPipeline Test" << std::endl;
 
     if (argc > 1) {
         gls::OpenCLContext glsContext("");
@@ -271,9 +267,9 @@ int main(int argc, const char* argv[]) {
         // calibrateSonya6400(&rawConverter, input_path.parent_path());
         // calibrateLeicaQ2(&rawConverter, input_path.parent_path());
 
-        demosaicDirectory(&rawConverter, input_path);
+        // demosaicDirectory(&rawConverter, input_path);
 
-        // demosaicFile(&rawConverter, input_path);
+        demosaicFile(&rawConverter, input_path);
 
 //        {
 //            gls::tiff_metadata dng_metadata, exif_metadata;

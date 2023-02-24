@@ -38,6 +38,7 @@
 		E5C5BDD3299C405800AAB593 /* demosaic_utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */; };
 		E5C5BE02299C45CA00AAB593 /* OpenCL in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE01299C45CA00AAB593 /* OpenCL */; };
 		E5C5BE04299C45DC00AAB593 /* Assets in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE03299C45DC00AAB593 /* Assets */; };
+		E5C5BE7029A83CDF00AAB593 /* CameraCalibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BE6F29A83CDF00AAB593 /* CameraCalibration.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -116,6 +117,7 @@
 		E5C5BE01299C45CA00AAB593 /* OpenCL */ = {isa = PBXFileReference; lastKnownFileType = folder; name = OpenCL; path = ../../src/OpenCL; sourceTree = "<group>"; };
 		E5C5BE03299C45DC00AAB593 /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets; path = ../../Assets; sourceTree = "<group>"; };
 		E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = ../../GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<group>"; };
+		E5C5BE6F29A83CDF00AAB593 /* CameraCalibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CameraCalibration.cpp; path = ../../src/CameraCalibration.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -137,7 +139,6 @@
 				E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */,
 				E5C5BE03299C45DC00AAB593 /* Assets */,
 				E5C5BE01299C45CA00AAB593 /* OpenCL */,
-				E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */,
 				E5C5BDAA299C3DC900AAB593 /* demosaic_cl.cpp */,
 				E5C5BDB4299C3DC900AAB593 /* demosaic_cpu.cpp */,
 				E5C5BDAE299C3DC900AAB593 /* demosaic.cpp */,
@@ -147,10 +148,12 @@
 				E5C5BDAC299C3DC900AAB593 /* iPhone11Calibration.cpp */,
 				E5C5BDB0299C3DC900AAB593 /* LeicaQ2Calibration.cpp */,
 				E5C5BDA9299C3DC900AAB593 /* pyramid_processor.cpp */,
-				E5C5BDB6299C3DC900AAB593 /* RANSAC.cpp */,
 				E5C5BDB2299C3DC900AAB593 /* raw_converter.cpp */,
 				E5C5BDAD299C3DC900AAB593 /* RicohGRIIICalibration.cpp */,
 				E5C5BDB1299C3DC900AAB593 /* Sonya6400Calibration.cpp */,
+				E5C5BDB5299C3DC900AAB593 /* CanonEOSRPCalibration.cpp */,
+				E5C5BE6F29A83CDF00AAB593 /* CameraCalibration.cpp */,
+				E5C5BDB6299C3DC900AAB593 /* RANSAC.cpp */,
 				E5C5BDAF299C3DC900AAB593 /* SURF.cpp */,
 				E5C5BDB3299C3DC900AAB593 /* ThreadPool.cpp */,
 				E5C5BD94299C3DB700AAB593 /* CameraCalibration.hpp */,
@@ -336,6 +339,7 @@
 				E5C5BDC2299C3DC900AAB593 /* ThreadPool.cpp in Sources */,
 				E5C5BDC3299C3DC900AAB593 /* demosaic_cpu.cpp in Sources */,
 				E5C5BDC4299C3DC900AAB593 /* CanonEOSRPCalibration.cpp in Sources */,
+				E5C5BE7029A83CDF00AAB593 /* CameraCalibration.cpp in Sources */,
 				E5C5BDC5299C3DC900AAB593 /* RANSAC.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

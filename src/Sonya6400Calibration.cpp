@@ -19,6 +19,9 @@
 
 #include "CameraCalibration.hpp"
 #include "demosaic.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 template <size_t levels = 5>
 class Sonya6400Calibration : public CameraCalibration<levels> {
@@ -66,8 +69,7 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
         const float nlf_alpha =
             std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
-        // std::cout << "Sonya6400 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso
-        // << std::endl;
+        LOG_INFO(TAG) << "Sonya6400 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
         float lerp = std::lerp(0.125f, 2.0f, nlf_alpha);
         float lerp_c = 1;
@@ -159,7 +161,7 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
-        std::cout << "// iPhone 11 Calibration table:" << std::endl;
+        LOG_INFO(TAG) << "// iPhone 11 Calibration table:" << std::endl;
         dumpNoiseModel(calibration_files, noiseModel);
     }
 };

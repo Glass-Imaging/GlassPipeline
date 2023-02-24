@@ -21,9 +21,12 @@
 #include <iostream>
 #include <mutex>
 
-#include "ThreadPool.hpp"
-#include "feature2d.hpp"
 #include "gls_cl_image.hpp"
+#include "feature2d.hpp"
+#include "ThreadPool.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 #define USE_OPENCL true
 #define USE_OPENCL_INTEGRAL false
@@ -164,7 +167,7 @@ inline bool solve3x3(const gls::Matrix<3, 3>& A, const gls::Vector<3>& b, gls::V
                det;
         return true;
     }
-    printf("solve3x3: Singular Matrix!\n");
+    LOG_ERROR(TAG) << "solve3x3: Singular Matrix!" << std::endl;
     return false;
 }
 
@@ -377,7 +380,7 @@ void findMaximaInLayer(int width, int height, const std::array<gls::image<float>
             }
         }
     }
-    std::cout << "keyPointMaxima: " << keyPointMaxima << std::endl;
+    LOG_INFO(TAG) << "keyPointMaxima: " << keyPointMaxima << std::endl;
 }
 
 std::vector<float> getGaussianKernel(int n, float sigma) {
@@ -717,10 +720,10 @@ std::array<typename gls::cl_image_2d<T>::unique_ptr, N> sumImageStack(cl::Contex
 void SURFBuild(const std::array<gls::image<float>::unique_ptr, 4>& sum,
                const std::vector<int>& sizes, const std::vector<int>& sampleSteps,
                const std::vector<gls::image<float>::unique_ptr>& dets,
-               const std::vector<gls::image<float>::unique_ptr>& traces, int nOctaves,
-               int nOctaveLayers) {
-    int N = (int)sizes.size();
-    std::cout << "enqueueing " << N << " calcLayerDetAndTrace" << std::endl;
+               const std::vector<gls::image<float>::unique_ptr>& traces,
+               int nOctaves, int nOctaveLayers) {
+    int N = (int) sizes.size();
+    LOG_INFO(TAG) << "enqueueing " << N << " calcLayerDetAndTrace" << std::endl;
 
     ThreadPool threadPool(8);
 
@@ -754,8 +757,8 @@ void SURFFind(const gls::image<float>& sum, const std::vector<gls::image<float>:
     std::mutex keypointsMutex;
     ThreadPool threadPool(8);
 
-    int M = (int)middleIndices.size();
-    std::cout << "enqueueing " << M << " findMaximaInLayer" << std::endl;
+    int M = (int) middleIndices.size();
+    LOG_INFO(TAG) << "enqueueing " << M << " findMaximaInLayer" << std::endl;
     for (int i = 0; i < M; i++) {
         const int layer = middleIndices[i];
         const int octave = i / nOctaveLayers;
@@ -872,7 +875,7 @@ SURF_OpenCL::SURF_OpenCL(gls::OpenCLContext* glsContext, int width, int height, 
     int nTotalLayers = (nOctaveLayers + 2) * nOctaves;
 
     if (_dets.size() != nTotalLayers) {
-        printf("resizing dets and traces vectors to %d\n", nTotalLayers);
+        LOG_INFO(TAG) << "resizing dets and traces vectors to " << nTotalLayers << std::endl;
         _dets.resize(nTotalLayers);
         _traces.resize(nTotalLayers);
     }
@@ -1029,11 +1032,11 @@ void SURF_OpenCL::calcDetAndTrace(const gls::cl_image_2d<float>& sumImage,
 }
 
 void SURF_OpenCL::Build(const std::array<gls::cl_image_2d<float>::unique_ptr, 4>& sum,
-                        const std::vector<int>& sizes, const std::vector<int>& sampleSteps,
-                        const std::vector<gls::cl_image_2d<float>::unique_ptr>& dets,
-                        const std::vector<gls::cl_image_2d<float>::unique_ptr>& traces) {
-    int N = (int)sizes.size();
-    std::cout << "enqueueing " << N << " calcLayerDetAndTrace" << std::endl;
+                 const std::vector<int>& sizes, const std::vector<int>& sampleSteps,
+                 const std::vector<gls::cl_image_2d<float>::unique_ptr>& dets,
+                 const std::vector<gls::cl_image_2d<float>::unique_ptr>& traces) {
+    int N = (int) sizes.size();
+    LOG_INFO(TAG) << "enqueueing " << N << " calcLayerDetAndTrace" << std::endl;
 
     const int layers = _nOctaveLayers + 2;
 
@@ -1078,8 +1081,7 @@ void SURF_OpenCL::Build(const std::array<gls::cl_image_2d<float>::unique_ptr, 4>
             DetAndTraceHaarPattern haarPattern(sum[0]->width, sum[0]->height, sizes[i],
                                                sampleSteps[i]);
 
-            //            std::cout << "DetAndTraceHaarPattern: " << sum[0]->width << ", " <<
-            //            sum[0]->height << ", " << sizes[i] << ", " << sampleSteps[i] << std::endl;
+//            LOG_INFO(TAG) << "DetAndTraceHaarPattern: " << sum[0]->width << ", " << sum[0]->height << ", " << sizes[i] << ", " << sampleSteps[i] << std::endl;
 
 #if USE_INTEGRAL_PYRAMID
             // Rescale sampling points to the pyramid level
@@ -1155,12 +1157,12 @@ void SURF_OpenCL::findMaximaInLayer(const std::array<const gls::cl_image_2d<floa
 }
 
 void SURF_OpenCL::Find(const std::vector<gls::cl_image_2d<float>::unique_ptr>& dets,
-                       const std::vector<gls::cl_image_2d<float>::unique_ptr>& traces,
-                       const std::vector<int>& sizes, const std::vector<int>& sampleSteps,
-                       const std::vector<int>& middleIndices, std::vector<KeyPoint>* keypoints,
-                       int nOctaveLayers, float hessianThreshold) {
-    int M = (int)middleIndices.size();
-    std::cout << "enqueueing " << M << " findMaximaInLayer" << std::endl;
+                const std::vector<gls::cl_image_2d<float>::unique_ptr>& traces,
+                const std::vector<int>& sizes, const std::vector<int>& sampleSteps,
+                const std::vector<int>& middleIndices, std::vector<KeyPoint>* keypoints,
+                int nOctaveLayers, float hessianThreshold) {
+    int M = (int) middleIndices.size();
+    LOG_INFO(TAG) << "enqueueing " << M << " findMaximaInLayer" << std::endl;
     for (int i = 0; i < M; i++) {
         const int layer = middleIndices[i];
         const int octave = i / nOctaveLayers;
@@ -1179,9 +1181,8 @@ void SURF_OpenCL::Find(const std::vector<gls::cl_image_2d<float>::unique_ptr>& d
     const auto keyPointMaxima = (KeyPointMaxima*)cl::enqueueMapBuffer(
         _keyPointsBuffer, true, CL_MAP_READ | CL_MAP_WRITE, 0, sizeof(KeyPointMaxima));
 
-    std::cout << "keyPointMaxima: " << keyPointMaxima->count << std::endl;
-    std::span<KeyPoint> newElements(keyPointMaxima->keyPoints,
-                                    std::min(keyPointMaxima->count, KeyPointMaxima::MaxCount));
+    LOG_INFO(TAG) << "keyPointMaxima: " << keyPointMaxima->count << std::endl;
+    std::span<KeyPoint> newElements(keyPointMaxima->keyPoints, std::min(keyPointMaxima->count, KeyPointMaxima::MaxCount));
     keypoints->insert(end(*keypoints), begin(newElements), end(newElements));
 
     // Reset count
@@ -1240,8 +1241,8 @@ void SURF_OpenCL::fastHessianDetector(const std::array<gls::cl_image_2d<float>::
          hessianThreshold);
 
     auto t_end = std::chrono::high_resolution_clock::now();
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    printf("Features Finding Time: %.2fms\n", elapsed_time_ms);
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    LOG_INFO(TAG) << "Features Finding Time: " << elapsed_time_ms << std::endl;
 
     sort(keypoints->begin(), keypoints->end(), KeypointGreater());
 }
@@ -1364,7 +1365,7 @@ void SURF_OpenCL::detectAndCompute(const gls::image<float>& img, std::vector<Key
     const int tile_width = img.width / sections.width;
     const int tile_height = img.height / sections.height;
 
-    std::cout << "Tile size: " << tile_width << " x " << tile_height << std::endl;
+    LOG_INFO(TAG) << "Tile size: " << tile_width << " x " << tile_height << std::endl;
 
     // TODO: Add a skirt overlap between tiles
     int y_pos = 0;
@@ -1393,14 +1394,14 @@ void SURF_OpenCL::detectAndCompute(const gls::image<float>& img, std::vector<Key
 
         // Limit the max number of feature points
         if (tileKeypoints->size() > _max_features) {
-            printf("detectAndCompute - dropping: %d features out of %d\n",
-                   (int)tileKeypoints->size() - _max_features, (int)tileKeypoints->size());
+            LOG_INFO(TAG) << "detectAndCompute - dropping: " << (int) tileKeypoints->size() - _max_features
+                          << " features out of " << (int) tileKeypoints->size() << std::endl;
             tileKeypoints->erase(tileKeypoints->begin() + _max_features, tileKeypoints->end());
         }
 
         int N = (int)tileKeypoints->size();
 
-        std::cout << "tileKeypoints: " << N << std::endl;
+        LOG_INFO(TAG) << "tileKeypoints: " << N << std::endl;
 
         auto tileDescriptors =
             descriptors != nullptr ? std::make_unique<gls::image<float>>(64, N) : nullptr;
@@ -1439,13 +1440,12 @@ void SURF_OpenCL::detectAndCompute(const gls::image<float>& img, std::vector<Key
         }
 
         auto t_end_descriptor = std::chrono::high_resolution_clock::now();
-        printf("--> descriptor Time: %.2fms\n", timeDiff(t_start_descriptor, t_end_descriptor));
+        LOG_INFO(TAG) << "--> descriptor Time: " << timeDiff(t_start_descriptor, t_end_descriptor) << std::endl;
     }
 
     mergeKeypoints(allKeypoints, keypoints, allDescriptors, descriptors);
 
-    std::cout << "Collected " << keypoints->size() << " keypoints and " << (**descriptors).height
-              << " descriptors" << std::endl;
+    LOG_INFO(TAG) << "Collected " << keypoints->size() << " keypoints and " << (**descriptors).height << " descriptors" << std::endl;
 }
 
 void matchKeyPoints(const gls::image<float>& descriptor1, const gls::image<float>& descriptor2,
@@ -1542,7 +1542,7 @@ std::vector<std::pair<Point2f, Point2f>> SURF::detection(gls::OpenCLContext* cLC
                                    /*nOctaves=*/4, /*nOctaveLayers=*/2, /*hessianThreshold=*/0.02);
 
     auto t_surf = std::chrono::high_resolution_clock::now();
-    printf("--> SURF Creation Time: %.2fms\n", timeDiff(t_start, t_surf));
+    LOG_INFO(TAG) << "--> SURF Creation Time: " << timeDiff(t_start, t_surf) << std::endl;
 
     auto keypoints1 = std::make_unique<std::vector<KeyPoint>>();
     auto keypoints2 = std::make_unique<std::vector<KeyPoint>>();
@@ -1552,19 +1552,18 @@ std::vector<std::pair<Point2f, Point2f>> SURF::detection(gls::OpenCLContext* cLC
     surf->detectAndCompute(image2, keypoints2.get(), &descriptor2);
 
     auto t_detect = std::chrono::high_resolution_clock::now();
-    printf("--> detectAndCompute Time: %.2fms\n", timeDiff(t_surf, t_detect));
+    LOG_INFO(TAG) << "--> detectAndCompute Time: " << timeDiff(t_surf, t_detect) << std::endl;
 
-    printf(" ---------- \n Detected feature points: %ld, %ld\n", keypoints1->size(),
-           keypoints2->size());
+    LOG_INFO(TAG) << " ---------- \n Detected feature points: " << keypoints1->size() << ", " << keypoints2->size() << std::endl;
 
     // (4) Match feature points
     std::vector<DMatch> matchedPoints = surf->matchKeyPoints(*descriptor1, *descriptor2);
 
     auto t_match = std::chrono::high_resolution_clock::now();
-    printf("--> Keypoint Matching: %.2fms\n", timeDiff(t_detect, t_match));
+    LOG_INFO(TAG) << "--> Keypoint Matching: " << timeDiff(t_detect, t_match) << std::endl;
 
     auto t_sort = std::chrono::high_resolution_clock::now();
-    printf("--> Keypoint Sorting: %.2fms\n", timeDiff(t_match, t_sort));
+    LOG_INFO(TAG) << "--> Keypoint Sorting: " << timeDiff(t_match, t_sort) << std::endl;
 
     // Convert to Point2D format
     std::vector<std::pair<Point2f, Point2f>> result(matchedPoints.size());
@@ -1574,10 +1573,10 @@ std::vector<std::pair<Point2f, Point2f>> SURF::detection(gls::OpenCLContext* cLC
     }
 
     auto t_end = std::chrono::high_resolution_clock::now();
-    printf("--> Keypoint Matching & Sorting Time: %.2fms\n", timeDiff(t_detect, t_end));
+    LOG_INFO(TAG) << "--> Keypoint Matching & Sorting Time: " << timeDiff(t_detect, t_end) << std::endl;
 
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
-    printf("--> Features Finding Time: %.2fms\n", elapsed_time_ms);
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    LOG_INFO(TAG) << "--> Features Finding Time: " << elapsed_time_ms << std::endl;
 
     return result;
 }

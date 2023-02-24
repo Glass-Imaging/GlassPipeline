@@ -14,6 +14,9 @@
 // limitations under the License.
 
 #include "demosaic.hpp"
+#include "gls_logging.h"
+
+static const char* TAG = "DEMOSAIC";
 
 enum { red = 0, green = 1, blue = 2, green2 = 3 };
 
@@ -206,7 +209,7 @@ gls::image<gls::rgb_pixel_16>::unique_ptr demosaicImageCPU(
     DemosaicParameters demosaicParameters;
     unpackDNGMetadata(rawImage, metadata, &demosaicParameters, auto_white_balance, nullptr, false);
 
-    printf("Begin demosaicing image (CPU)...\n");
+    LOG_INFO(TAG) << "Begin demosaicing image (CPU)..." << std::endl;
 
     const auto offsets = bayerOffsets[demosaicParameters.bayerPattern];
     gls::image<gls::luma_pixel_16> scaledRawImage =
@@ -225,10 +228,10 @@ gls::image<gls::rgb_pixel_16>::unique_ptr demosaicImageCPU(
     auto rgbImage =
         std::make_unique<gls::image<gls::rgb_pixel_16>>(rawImage.width, rawImage.height);
 
-    printf("interpolating green channel...\n");
+    LOG_INFO(TAG) << "interpolating green channel..." << std::endl;
     interpolateGreen(scaledRawImage, rgbImage.get(), demosaicParameters.bayerPattern);
 
-    printf("interpolating red and blue channels...\n");
+    LOG_INFO(TAG) << "interpolating red and blue channels..." << std::endl;
     interpolateRedBlue(rgbImage.get(), demosaicParameters.bayerPattern);
 
     // Transform to RGB space
