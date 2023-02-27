@@ -58,10 +58,8 @@ class LeicaQ2Calibration : public CameraCalibration<levels> {
         }
     }
 
-    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(
-        int iso) const override {
-        const float nlf_alpha =
-            std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
+    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
+        const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
         LOG_INFO(TAG) << "LeicaQ2 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
@@ -82,22 +80,10 @@ class LeicaQ2Calibration : public CameraCalibration<levels> {
                  .gradientBoost = 32,
                  .sharpening = 1.2,  // Sharpen HF in LTM
              },
-             {.luma = lmult[1] * lerp,
-              .chroma = cmult[1] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1.1},
-             {.luma = lmult[2] * lerp,
-              .chroma = cmult[2] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1},
-             {.luma = lmult[3] * lerp,
-              .chroma = cmult[3] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1},
-             {.luma = lmult[4] * lerp,
-              .chroma = cmult[4] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1}}};
+             {.luma = lmult[1] * lerp, .chroma = cmult[1] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1.1},
+             {.luma = lmult[2] * lerp, .chroma = cmult[2] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1},
+             {.luma = lmult[3] * lerp, .chroma = cmult[3] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1},
+             {.luma = lmult[4] * lerp, .chroma = cmult[4] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1}}};
 
         return {nlf_alpha, denoiseParameters};
     }
@@ -107,12 +93,10 @@ class LeicaQ2Calibration : public CameraCalibration<levels> {
                                             .saturation = 1.0,
                                             .toneCurveSlope = 3.5,
                                             .localToneMapping = false},
-                .ltmParameters = {
-                    .eps = 0.01, .shadows = 0.7, .highlights = 1.3, .detail = {1, 1.05, 1.3}}};
+                .ltmParameters = {.eps = 0.01, .shadows = 0.7, .highlights = 1.3, .detail = {1, 1.05, 1.3}}};
     }
 
-    void calibrate(RawConverter* rawConverter,
-                   const std::filesystem::path& input_dir) const override {
+    void calibrate(RawConverter* rawConverter, const std::filesystem::path& input_dir) const override {
         std::array<CalibrationEntry, 10> calibration_files = {{
             {100, "L1010611.DNG", {3440, 777, 1549, 1006}, false},
             {200, "L1010614.DNG", {3440, 777, 1549, 1006}, false},
@@ -138,11 +122,10 @@ class LeicaQ2Calibration : public CameraCalibration<levels> {
                                                          .toneCurveSlope = 3.5,
                                                      }};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(
-                rawConverter, input_path, &demosaicParameters, entry.iso, entry.gmb_position);
-            rgb_image->write_png_file(
-                (input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
+                                                                   entry.iso, entry.gmb_position);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
+                                      /*skip_alpha=*/true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }
@@ -152,9 +135,7 @@ class LeicaQ2Calibration : public CameraCalibration<levels> {
     }
 };
 
-std::unique_ptr<CameraCalibration<5>> getLeicaQ2Calibration() {
-    return std::make_unique<LeicaQ2Calibration<5>>();
-}
+std::unique_ptr<CameraCalibration<5>> getLeicaQ2Calibration() { return std::make_unique<LeicaQ2Calibration<5>>(); }
 
 void calibrateiLeicaQ2(RawConverter* rawConverter, const std::filesystem::path& input_dir) {
     LeicaQ2Calibration calibration;
@@ -164,15 +145,14 @@ void calibrateiLeicaQ2(RawConverter* rawConverter, const std::filesystem::path& 
 gls::image<gls::rgb_pixel>::unique_ptr demosaicLeicaQ2DNG(RawConverter* rawConverter,
                                                           const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(
-        input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
     LeicaQ2Calibration calibration;
-    auto demosaicParameters =
-        calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
+    auto demosaicParameters = calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
 
-    return RawConverter::convertToRGBImage(*rawConverter->runPipeline(
-        *inputImage, demosaicParameters.get(), /*calibrateFromImage=*/false));
+    return RawConverter::convertToRGBImage(
+        *rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/false));
 }
 
 // --- NLFData ---

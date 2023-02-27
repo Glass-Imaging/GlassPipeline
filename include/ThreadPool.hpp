@@ -52,8 +52,7 @@ template <class F, class... Args>
 decltype(auto) ThreadPool::enqueue(F&& f, Args&&... args) {
     using return_type = decltype(f(args...));
 
-    std::packaged_task<return_type()> task(
-        std::bind(std::forward<F>(f), std::forward<Args>(args)...));
+    std::packaged_task<return_type()> task(std::bind(std::forward<F>(f), std::forward<Args>(args)...));
 
     std::future<return_type> res = task.get_future();
     {

@@ -42,25 +42,21 @@ class LocalToneMapping {
         auto clContext = glsContext->clContext();
 
         if (ltmMaskImage->width != width || ltmMaskImage->height != height) {
-            ltmMaskImage =
-                std::make_unique<gls::cl_image_2d<gls::luma_pixel_float>>(clContext, width, height);
-            lfAbGfImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width / 16, height / 16);
-            lfAbGfMeanImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width / 16, height / 16);
-            mfAbGfImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width / 4, height / 4);
-            mfAbGfMeanImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width / 4, height / 4);
-            hfAbGfImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width, height);
-            hfAbGfMeanImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(
-                clContext, width, height);
+            ltmMaskImage = std::make_unique<gls::cl_image_2d<gls::luma_pixel_float>>(clContext, width, height);
+            lfAbGfImage =
+                std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width / 16, height / 16);
+            lfAbGfMeanImage =
+                std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width / 16, height / 16);
+            mfAbGfImage =
+                std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width / 4, height / 4);
+            mfAbGfMeanImage =
+                std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width / 4, height / 4);
+            hfAbGfImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width, height);
+            hfAbGfMeanImage = std::make_unique<gls::cl_image_2d<gls::luma_alpha_pixel_float>>(clContext, width, height);
         }
     }
 
-    void createMask(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::rgba_pixel_float>& image,
+    void createMask(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& image,
                     const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage,
                     const NoiseModel<5>& noiseModel, const DemosaicParameters& demosaicParameters) {
         const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abImage = {
@@ -68,10 +64,9 @@ class LocalToneMapping {
         const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abMeanImage = {
             lfAbGfMeanImage.get(), mfAbGfMeanImage.get(), hfAbGfMeanImage.get()};
 
-        gls::Vector<2> nlf = {noiseModel.pyramidNlf[0].first[0],
-                              noiseModel.pyramidNlf[0].second[0]};
-        localToneMappingMask(glsContext, image, guideImage, abImage, abMeanImage,
-                             demosaicParameters.ltmParameters, ycbcr_srgb, nlf, ltmMaskImage.get());
+        gls::Vector<2> nlf = {noiseModel.pyramidNlf[0].first[0], noiseModel.pyramidNlf[0].second[0]};
+        localToneMappingMask(glsContext, image, guideImage, abImage, abMeanImage, demosaicParameters.ltmParameters,
+                             ycbcr_srgb, nlf, ltmMaskImage.get());
     }
 
     const gls::cl_image_2d<gls::luma_pixel_float>& getMask() { return *ltmMaskImage; }
@@ -113,39 +108,33 @@ class RawConverter {
     const std::filesystem::path _assets_root;
 
    public:
-    RawConverter(gls::OpenCLContext* glsContext,
-                 const std::filesystem::path& assets_root = "Assets/")
+    RawConverter(gls::OpenCLContext* glsContext, const std::filesystem::path& assets_root = "Assets/")
         : _glsContext(glsContext), _assets_root(assets_root) {
         localToneMapping = std::make_unique<LocalToneMapping>(_glsContext);
     }
 
     gls::OpenCLContext* getContext() const { return _glsContext; }
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* runPipeline(
-        const gls::image<gls::luma_pixel_16>& rawImage, DemosaicParameters* demosaicParameters,
-        bool calibrateFromImage = false);
+    gls::cl_image_2d<gls::rgba_pixel_float>* runPipeline(const gls::image<gls::luma_pixel_16>& rawImage,
+                                                         DemosaicParameters* demosaicParameters,
+                                                         bool calibrateFromImage = false);
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* demosaic(
-        const gls::image<gls::luma_pixel_16>& rawImage, DemosaicParameters* demosaicParameters,
-        bool calibrateFromImage);
+    gls::cl_image_2d<gls::rgba_pixel_float>* demosaic(const gls::image<gls::luma_pixel_16>& rawImage,
+                                                      DemosaicParameters* demosaicParameters, bool calibrateFromImage);
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* denoise(
-        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-        DemosaicParameters* demosaicParameters, bool calibrateFromImage);
+    gls::cl_image_2d<gls::rgba_pixel_float>* denoise(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                                                     DemosaicParameters* demosaicParameters, bool calibrateFromImage);
 
-    void fuseFrame(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                   const gls::Matrix<3, 3>& homography, DemosaicParameters* demosaicParameters,
-                   bool calibrateFromImage);
+    void fuseFrame(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, const gls::Matrix<3, 3>& homography,
+                   DemosaicParameters* demosaicParameters, bool calibrateFromImage);
 
     gls::cl_image_2d<gls::rgba_pixel_float>* getFusedImage();
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* postProcess(
-        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-        const DemosaicParameters& demosaicParameters);
+    gls::cl_image_2d<gls::rgba_pixel_float>* postProcess(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                                                         const DemosaicParameters& demosaicParameters);
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* runFastPipeline(
-        const gls::image<gls::luma_pixel_16>& rawImage,
-        const DemosaicParameters& demosaicParameters);
+    gls::cl_image_2d<gls::rgba_pixel_float>* runFastPipeline(const gls::image<gls::luma_pixel_16>& rawImage,
+                                                             const DemosaicParameters& demosaicParameters);
 
     template <typename T = gls::rgb_pixel>
     static typename gls::image<T>::unique_ptr convertToRGBImage(

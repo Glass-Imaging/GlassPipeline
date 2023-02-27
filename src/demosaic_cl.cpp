@@ -21,8 +21,8 @@
 #include "demosaic.hpp"
 #include "gls_cl.hpp"
 #include "gls_cl_image.hpp"
-#include "gls_statistics.hpp"
 #include "gls_logging.h"
+#include "gls_statistics.hpp"
 
 static const char* TAG = "DEMOSAIC";
 
@@ -32,10 +32,9 @@ static const char* TAG = "DEMOSAIC";
  things can crash in place.
  */
 
-void scaleRawData(gls::OpenCLContext* glsContext,
-                  const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
-                  gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage,
-                  BayerPattern bayerPattern, gls::Vector<4> scaleMul, float blackLevel) {
+void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
+                  gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage, BayerPattern bayerPattern,
+                  gls::Vector<4> scaleMul, float blackLevel) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -48,14 +47,12 @@ void scaleRawData(gls::OpenCLContext* glsContext,
                                     >(program, "scaleRawData");
 
     // Work on one Quad (2x2) at a time
-    kernel(
-        gls::OpenCLContext::buildEnqueueArgs(scaledRawImage->width / 2, scaledRawImage->height / 2),
-        rawImage.getImage2D(), scaledRawImage->getImage2D(), bayerPattern,
-        {scaleMul[0], scaleMul[1], scaleMul[2], scaleMul[3]}, blackLevel);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(scaledRawImage->width / 2, scaledRawImage->height / 2),
+           rawImage.getImage2D(), scaledRawImage->getImage2D(), bayerPattern,
+           {scaleMul[0], scaleMul[1], scaleMul[2], scaleMul[3]}, blackLevel);
 }
 
-void rawImageGradient(gls::OpenCLContext* glsContext,
-                      const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void rawImageGradient(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                       gls::cl_image_2d<gls::luma_alpha_pixel_float>* gradientImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
@@ -66,12 +63,11 @@ void rawImageGradient(gls::OpenCLContext* glsContext,
                                     >(program, "rawImageGradient");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(gradientImage->width, gradientImage->height),
-           rawImage.getImage2D(), gradientImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(gradientImage->width, gradientImage->height), rawImage.getImage2D(),
+           gradientImage->getImage2D());
 }
 
-void rawImageSobel(gls::OpenCLContext* glsContext,
-                   const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void rawImageSobel(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                    gls::cl_image_2d<gls::rgba_pixel_float>* gradientImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
@@ -82,15 +78,14 @@ void rawImageSobel(gls::OpenCLContext* glsContext,
                                     >(program, "rawImageSobel");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(gradientImage->width, gradientImage->height),
-           rawImage.getImage2D(), gradientImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(gradientImage->width, gradientImage->height), rawImage.getImage2D(),
+           gradientImage->getImage2D());
 }
 
-void interpolateGreen(gls::OpenCLContext* glsContext,
-                      const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void interpolateGreen(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                       const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                      gls::cl_image_2d<gls::luma_pixel_float>* greenImage,
-                      BayerPattern bayerPattern, gls::Vector<2> greenVariance) {
+                      gls::cl_image_2d<gls::luma_pixel_float>* greenImage, BayerPattern bayerPattern,
+                      gls::Vector<2> greenVariance) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -103,18 +98,15 @@ void interpolateGreen(gls::OpenCLContext* glsContext,
                                     >(program, "interpolateGreen");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(greenImage->width, greenImage->height),
-           rawImage.getImage2D(), gradientImage.getImage2D(), greenImage->getImage2D(),
-           bayerPattern, {greenVariance[0], greenVariance[1]});
+    kernel(gls::OpenCLContext::buildEnqueueArgs(greenImage->width, greenImage->height), rawImage.getImage2D(),
+           gradientImage.getImage2D(), greenImage->getImage2D(), bayerPattern, {greenVariance[0], greenVariance[1]});
 }
 
-void interpolateRedBlue(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void interpolateRedBlue(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                         const gls::cl_image_2d<gls::luma_pixel_float>& greenImage,
                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                        gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-                        BayerPattern bayerPattern, gls::Vector<2> redVariance,
-                        gls::Vector<2> blueVariance) {
+                        gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern,
+                        gls::Vector<2> redVariance, gls::Vector<2> blueVariance) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -129,18 +121,16 @@ void interpolateRedBlue(gls::OpenCLContext* glsContext,
                                     >(program, "interpolateRedBlue");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width / 2, rgbImage->height / 2),
-           rawImage.getImage2D(), greenImage.getImage2D(), gradientImage.getImage2D(),
-           rgbImage->getImage2D(), bayerPattern, {redVariance[0], redVariance[1]},
-           {blueVariance[0], blueVariance[1]});
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width / 2, rgbImage->height / 2), rawImage.getImage2D(),
+           greenImage.getImage2D(), gradientImage.getImage2D(), rgbImage->getImage2D(), bayerPattern,
+           {redVariance[0], redVariance[1]}, {blueVariance[0], blueVariance[1]});
 }
 
 void interpolateRedBlueAtGreen(gls::OpenCLContext* glsContext,
                                const gls::cl_image_2d<gls::rgba_pixel_float>& rgbImageIn,
                                const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                               gls::cl_image_2d<gls::rgba_pixel_float>* rgbImageOut,
-                               BayerPattern bayerPattern, gls::Vector<2> redVariance,
-                               gls::Vector<2> blueVariance) {
+                               gls::cl_image_2d<gls::rgba_pixel_float>* rgbImageOut, BayerPattern bayerPattern,
+                               gls::Vector<2> redVariance, gls::Vector<2> blueVariance) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -155,14 +145,14 @@ void interpolateRedBlueAtGreen(gls::OpenCLContext* glsContext,
 
     // Schedule the kernel on the GPU
     kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImageOut->width / 2, rgbImageOut->height / 2),
-           rgbImageIn.getImage2D(), gradientImage.getImage2D(), rgbImageOut->getImage2D(),
-           bayerPattern, {redVariance[0], redVariance[1]}, {blueVariance[0], blueVariance[1]});
+           rgbImageIn.getImage2D(), gradientImage.getImage2D(), rgbImageOut->getImage2D(), bayerPattern,
+           {redVariance[0], redVariance[1]}, {blueVariance[0], blueVariance[1]});
 }
 
 void malvar(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
             const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-            gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern,
-            gls::Vector<2> redVariance, gls::Vector<2> greenVariance, gls::Vector<2> blueVariance) {
+            gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern, gls::Vector<2> redVariance,
+            gls::Vector<2> greenVariance, gls::Vector<2> blueVariance) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -177,14 +167,12 @@ void malvar(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pix
                                     >(program, "malvar");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height),
-           rawImage.getImage2D(), gradientImage.getImage2D(), rgbImage->getImage2D(), bayerPattern,
-           {redVariance[0], redVariance[1]}, {greenVariance[0], greenVariance[1]},
-           {blueVariance[0], blueVariance[1]});
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height), rawImage.getImage2D(),
+           gradientImage.getImage2D(), rgbImage->getImage2D(), bayerPattern, {redVariance[0], redVariance[1]},
+           {greenVariance[0], greenVariance[1]}, {blueVariance[0], blueVariance[1]});
 }
 
-void fasteDebayer(gls::OpenCLContext* glsContext,
-                  const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void fasteDebayer(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                   gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, BayerPattern bayerPattern) {
     assert(rawImage.width == 2 * rgbImage->width && rawImage.height == 2 * rgbImage->height);
 
@@ -198,14 +186,13 @@ void fasteDebayer(gls::OpenCLContext* glsContext,
                                     >(program, "fastDebayer");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height),
-           rawImage.getImage2D(), rgbImage->getImage2D(), bayerPattern);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height), rawImage.getImage2D(),
+           rgbImage->getImage2D(), bayerPattern);
 }
 
-void YCbCrNoiseStatistics(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                        const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage,
-                        gls::cl_image_2d<gls::rgba_pixel_float>* statsImage) {
+void YCbCrNoiseStatistics(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage,
+                          gls::cl_image_2d<gls::rgba_pixel_float>* statsImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -216,16 +203,12 @@ void YCbCrNoiseStatistics(gls::OpenCLContext* glsContext,
                                     >(program, "YCbCrNoiseStatistics");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(statsImage->width, statsImage->height),
-           inputImage.getImage2D(),
-           sobelImage.getImage2D(),
-           statsImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(statsImage->width, statsImage->height), inputImage.getImage2D(),
+           sobelImage.getImage2D(), statsImage->getImage2D());
 }
 
-void rawNoiseStatistics(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                        BayerPattern bayerPattern,
-                        const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
+void rawNoiseStatistics(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                        BayerPattern bayerPattern, const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
                         gls::cl_image_2d<gls::rgba_pixel_float>* meanImage,
                         gls::cl_image_2d<gls::rgba_pixel_float>* varImage,
                         gls::cl_image_2d<gls::rgba_pixel_float>* kurtImage) {
@@ -246,14 +229,14 @@ void rawNoiseStatistics(gls::OpenCLContext* glsContext,
                                     >(program, "rawNoiseStatistics");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(meanImage->width, meanImage->height),
-           rawImage.getImage2D(), bayerPattern, sobelImage.getImage2D(), meanImage->getImage2D(),
-           varImage->getImage2D(), kurtImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(meanImage->width, meanImage->height), rawImage.getImage2D(),
+           bayerPattern, sobelImage.getImage2D(), meanImage->getImage2D(), varImage->getImage2D(),
+           kurtImage->getImage2D());
 }
 
 template <typename T1, typename T2>
-void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName,
-                 const gls::cl_image_2d<T1>& inputImage, gls::cl_image_2d<T2>* outputImage) {
+void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName, const gls::cl_image_2d<T1>& inputImage,
+                 gls::cl_image_2d<T2>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -263,8 +246,8 @@ void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName,
                                     >(program, kernelName);
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           outputImage->getImage2D());
 }
 
 template void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName,
@@ -284,13 +267,12 @@ template void applyKernel(gls::OpenCLContext* glsContext, const std::string& ker
                           gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
 template <typename T>
-void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName,
-                   const gls::cl_image_2d<T>& inputImage, gls::cl_image_2d<T>* outputImage) {
+void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName, const gls::cl_image_2d<T>& inputImage,
+                   gls::cl_image_2d<T>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Bind the kernel parameters
     auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
@@ -298,8 +280,8 @@ void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName
                                     cl::Sampler>(program, kernelName);
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), outputImage->getImage2D(), linear_sampler);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           outputImage->getImage2D(), linear_sampler);
 }
 
 template void resampleImage(gls::OpenCLContext* glsContext, const std::string& kernelName,
@@ -312,16 +294,13 @@ template void resampleImage(gls::OpenCLContext* glsContext, const std::string& k
 
 template <typename T>
 void subtractNoiseImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<T>& inputImage,
-                        const gls::cl_image_2d<T>& inputImage1,
-                        const gls::cl_image_2d<T>& inputImageDenoised1,
-                        const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                        float luma_weight, float sharpening, const gls::Vector<2>& nlf,
-                        gls::cl_image_2d<T>* outputImage) {
+                        const gls::cl_image_2d<T>& inputImage1, const gls::cl_image_2d<T>& inputImageDenoised1,
+                        const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage, float luma_weight,
+                        float sharpening, const gls::Vector<2>& nlf, gls::cl_image_2d<T>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Bind the kernel parameters
     auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
@@ -336,24 +315,21 @@ void subtractNoiseImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<T
                                     >(program, "subtractNoiseImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), inputImage1.getImage2D(), inputImageDenoised1.getImage2D(),
-           gradientImage.getImage2D(), luma_weight, sharpening, {nlf[0], nlf[1]},
-           outputImage->getImage2D(), linear_sampler);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           inputImage1.getImage2D(), inputImageDenoised1.getImage2D(), gradientImage.getImage2D(), luma_weight,
+           sharpening, {nlf[0], nlf[1]}, outputImage->getImage2D(), linear_sampler);
 }
 
 template void subtractNoiseImage(gls::OpenCLContext* glsContext,
                                  const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                                  const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage1,
                                  const gls::cl_image_2d<gls::rgba_pixel_float>& inputImageDenoised1,
-                                 const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                                 float luma_weight, float sharpening, const gls::Vector<2>& nlf,
+                                 const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage, float luma_weight,
+                                 float sharpening, const gls::Vector<2>& nlf,
                                  gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
-void transformImage(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
-                    gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-                    const gls::Matrix<3, 3>& transform) {
+void transformImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
+                    gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, const gls::Matrix<3, 3>& transform) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -370,15 +346,13 @@ void transformImage(gls::OpenCLContext* glsContext,
                                     >(program, "transformImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height),
-           linearImage.getImage2D(), rgbImage->getImage2D(), clTransform);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height), linearImage.getImage2D(),
+           rgbImage->getImage2D(), clTransform);
 }
 
-void convertTosRGB(gls::OpenCLContext* glsContext,
-                   const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
+void convertTosRGB(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
                    const gls::cl_image_2d<gls::luma_pixel_float>& ltmMaskImage,
-                   gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage,
-                   const DemosaicParameters& demosaicParameters) {
+                   gls::cl_image_2d<gls::rgba_pixel_float>* rgbImage, const DemosaicParameters& demosaicParameters) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -399,15 +373,12 @@ void convertTosRGB(gls::OpenCLContext* glsContext,
                                     >(program, "convertTosRGB");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height),
-           linearImage.getImage2D(), ltmMaskImage.getImage2D(), rgbImage->getImage2D(), clTransform,
-           demosaicParameters.rgbConversionParameters);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbImage->width, rgbImage->height), linearImage.getImage2D(),
+           ltmMaskImage.getImage2D(), rgbImage->getImage2D(), clTransform, demosaicParameters.rgbConversionParameters);
 }
 
-void convertToGrayscale(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
-                        gls::cl_image_2d<float>* grayscaleImage,
-                        const DemosaicParameters& demosaicParameters) {
+void convertToGrayscale(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& linearImage,
+                        gls::cl_image_2d<float>* grayscaleImage, const DemosaicParameters& demosaicParameters) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -421,12 +392,10 @@ void convertToGrayscale(gls::OpenCLContext* glsContext,
 
     // Schedule the kernel on the GPU
     kernel(gls::OpenCLContext::buildEnqueueArgs(grayscaleImage->width, grayscaleImage->height),
-           linearImage.getImage2D(), grayscaleImage->getImage2D(),
-           {transform[0][0], transform[0][1], transform[0][2]});
+           linearImage.getImage2D(), grayscaleImage->getImage2D(), {transform[0][0], transform[0][1], transform[0][2]});
 }
 
-void despeckleImage(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+void despeckleImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                     const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
                     gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
@@ -443,19 +412,17 @@ void despeckleImage(gls::OpenCLContext* glsContext,
     cl_float3 cl_var_b = {var_b[0], var_b[1], var_b[2]};
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), cl_var_a, cl_var_b, outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           cl_var_a, cl_var_b, outputImage->getImage2D());
 }
 
 // --- Multiscale Noise Reduction ---
 // https://www.cns.nyu.edu/pub/lcv/rajashekar08a.pdf
 
-void denoiseImage(gls::OpenCLContext* glsContext,
-                  const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                  const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                  const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
-                  const gls::Vector<3> thresholdMultipliers, float chromaBoost, float gradientBoost,
-                  float gradientThreshold, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+void denoiseImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                  const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage, const gls::Vector<3>& var_a,
+                  const gls::Vector<3>& var_b, const gls::Vector<3> thresholdMultipliers, float chromaBoost,
+                  float gradientBoost, float gradientThreshold, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -475,14 +442,13 @@ void denoiseImage(gls::OpenCLContext* glsContext,
     cl_float3 cl_var_b = {var_b[0], var_b[1], var_b[2]};
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), gradientImage.getImage2D(), cl_var_a, cl_var_b,
-           {thresholdMultipliers[0], thresholdMultipliers[1], thresholdMultipliers[2]}, chromaBoost,
-           gradientBoost, gradientThreshold, outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           gradientImage.getImage2D(), cl_var_a, cl_var_b,
+           {thresholdMultipliers[0], thresholdMultipliers[1], thresholdMultipliers[2]}, chromaBoost, gradientBoost,
+           gradientThreshold, outputImage->getImage2D());
 }
 
-void denoiseImageGuided(gls::OpenCLContext* glsContext,
-                        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+void denoiseImageGuided(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                         const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
@@ -499,23 +465,20 @@ void denoiseImageGuided(gls::OpenCLContext* glsContext,
     cl_float3 cl_var_b = {var_b[0], var_b[1], var_b[2]};
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), cl_var_a, cl_var_b, outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           cl_var_a, cl_var_b, outputImage->getImage2D());
 }
 
 // Arrays order is LF, MF, HF
-void localToneMappingMask(
-    gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-    const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage,
-    const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abImage,
-    const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abMeanImage,
-    const LTMParameters& ltmParameters, const gls::Matrix<3, 3>& ycbcr_srgb,
-    const gls::Vector<2>& nlf, gls::cl_image_2d<gls::luma_pixel_float>* outputImage) {
+void localToneMappingMask(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage,
+                          const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abImage,
+                          const std::array<const gls::cl_image_2d<gls::luma_alpha_pixel_float>*, 3>& abMeanImage,
+                          const LTMParameters& ltmParameters, const gls::Matrix<3, 3>& ycbcr_srgb,
+                          const gls::Vector<2>& nlf, gls::cl_image_2d<gls::luma_pixel_float>* outputImage) {
     for (int i = 0; i < 3; i++) {
-        assert(guideImage[i]->width == abImage[i]->width &&
-               guideImage[i]->height == abImage[i]->height);
-        assert(guideImage[i]->width == abMeanImage[i]->width &&
-               guideImage[i]->height == abMeanImage[i]->height);
+        assert(guideImage[i]->width == abImage[i]->width && guideImage[i]->height == abImage[i]->height);
+        assert(guideImage[i]->width == abMeanImage[i]->width && guideImage[i]->height == abMeanImage[i]->height);
     }
 
     // Load the shader source
@@ -527,8 +490,7 @@ void localToneMappingMask(
                         {ycbcr_srgb[1][0], ycbcr_srgb[1][1], ycbcr_srgb[1][2]},
                         {ycbcr_srgb[2][0], ycbcr_srgb[2][1], ycbcr_srgb[2][2]}}};
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Bind the kernel parameters
     auto gfKernel = cl::KernelFunctor<cl::Image2D,  // guideImage
@@ -564,13 +526,12 @@ void localToneMappingMask(
         }
     }
 
-    ltmKernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-              inputImage.getImage2D(), abMeanImage[0]->getImage2D(), abMeanImage[1]->getImage2D(), abMeanImage[2]->getImage2D(), outputImage->getImage2D(),
-              ltmParameters, cl_ycbcr_srgb, { nlf[0], nlf[1] }, linear_sampler);
+    ltmKernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+              abMeanImage[0]->getImage2D(), abMeanImage[1]->getImage2D(), abMeanImage[2]->getImage2D(),
+              outputImage->getImage2D(), ltmParameters, cl_ycbcr_srgb, {nlf[0], nlf[1]}, linear_sampler);
 }
 
-void bayerToRawRGBA(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void bayerToRawRGBA(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                     gls::cl_image_2d<gls::rgba_pixel_float>* rgbaImage, BayerPattern bayerPattern) {
     assert(rawImage.width == 2 * rgbaImage->width && rawImage.height == 2 * rgbaImage->height);
 
@@ -584,12 +545,11 @@ void bayerToRawRGBA(gls::OpenCLContext* glsContext,
                                     >(program, "bayerToRawRGBA");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbaImage->width, rgbaImage->height),
-           rawImage.getImage2D(), rgbaImage->getImage2D(), bayerPattern);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbaImage->width, rgbaImage->height), rawImage.getImage2D(),
+           rgbaImage->getImage2D(), bayerPattern);
 }
 
-void rawRGBAToBayer(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::rgba_pixel_float>& rgbaImage,
+void rawRGBAToBayer(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& rgbaImage,
                     gls::cl_image_2d<gls::luma_pixel_float>* rawImage, BayerPattern bayerPattern) {
     assert(rawImage->width == 2 * rgbaImage.width && rawImage->height == 2 * rgbaImage.height);
 
@@ -603,14 +563,12 @@ void rawRGBAToBayer(gls::OpenCLContext* glsContext,
                                     >(program, "rawRGBAToBayer");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbaImage.width, rgbaImage.height),
-           rgbaImage.getImage2D(), rawImage->getImage2D(), bayerPattern);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(rgbaImage.width, rgbaImage.height), rgbaImage.getImage2D(),
+           rawImage->getImage2D(), bayerPattern);
 }
 
-void denoiseRawRGBAImage(gls::OpenCLContext* glsContext,
-                         const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                         const gls::Vector<4> rawVariance,
-                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+void denoiseRawRGBAImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                         const gls::Vector<4> rawVariance, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -621,16 +579,12 @@ void denoiseRawRGBAImage(gls::OpenCLContext* glsContext,
                                     >(program, "denoiseRawRGBAImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(),
-           {rawVariance[0], rawVariance[1], rawVariance[2], rawVariance[3]},
-           outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           {rawVariance[0], rawVariance[1], rawVariance[2], rawVariance[3]}, outputImage->getImage2D());
 }
 
-void despeckleRawRGBAImage(gls::OpenCLContext* glsContext,
-                           const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                           const gls::Vector<4> rawVariance,
-                           gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+void despeckleRawRGBAImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                           const gls::Vector<4> rawVariance, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -641,10 +595,8 @@ void despeckleRawRGBAImage(gls::OpenCLContext* glsContext,
                                     >(program, "despeckleRawRGBAImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(),
-           {rawVariance[0], rawVariance[1], rawVariance[2], rawVariance[3]},
-           outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           {rawVariance[0], rawVariance[1], rawVariance[2], rawVariance[3]}, outputImage->getImage2D());
 }
 
 std::vector<std::array<float, 3>> gaussianKernelBilinearWeights(float radius) {
@@ -659,27 +611,26 @@ std::vector<std::array<float, 3>> gaussianKernelBilinearWeights(float radius) {
             weights[i] = exp(-((float)(x * x + y * y) / (2 * radius * radius)));
         }
     }
-//    LOG_INFO(TAG) << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
-//    for (const auto& w : weights) {
-//        LOG_INFO(TAG) << std::setprecision(4) << std::scientific << w << ", ";
-//    }
-//    LOG_INFO(TAG) << std::endl;
+    //    LOG_INFO(TAG) << "Gaussian Kernel weights (" << weights.size() << "): " << std::endl;
+    //    for (const auto& w : weights) {
+    //        LOG_INFO(TAG) << std::setprecision(4) << std::scientific << w << ", ";
+    //    }
+    //    LOG_INFO(TAG) << std::endl;
 
     const int outWidth = kernelSize / 2 + 1;
     const int weightsCount = outWidth * outWidth;
     std::vector<std::array<float, 3>> weightsOut(weightsCount);
     KernelOptimizeBilinear2d(kernelSize, weights, &weightsOut);
 
-//    LOG_INFO(TAG) << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
-//    for (const auto& [w, x, y] : weightsOut) {
-//        LOG_INFO(TAG) << w << " @ (" << x << " : " << y << "), " << std::endl;
-//    }
+    //    LOG_INFO(TAG) << "Bilinear Gaussian Kernel weights and offsets (" << weightsOut.size() << "): " << std::endl;
+    //    for (const auto& [w, x, y] : weightsOut) {
+    //        LOG_INFO(TAG) << w << " @ (" << x << " : " << y << "), " << std::endl;
+    //    }
 
     return weightsOut;
 }
 
-void gaussianBlurSobelImage(gls::OpenCLContext* glsContext,
-                            const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+void gaussianBlurSobelImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                             const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
                             std::array<float, 2> rawNoiseModel, float radius1, float radius2,
                             gls::cl_image_2d<gls::luma_alpha_pixel_float>* outputImage) {
@@ -694,8 +645,7 @@ void gaussianBlurSobelImage(gls::OpenCLContext* glsContext,
     cl::Buffer weightsBuffer2(weightsOut2.begin(), weightsOut2.end(), /* readOnly */ true,
                               /* useHostPtr */ false);
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Bind the kernel parameters
     auto kernel = cl::KernelFunctor<cl::Image2D,  // rawImage
@@ -710,15 +660,13 @@ void gaussianBlurSobelImage(gls::OpenCLContext* glsContext,
                                     >(program, "sampledConvolutionSobel");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           rawImage.getImage2D(), sobelImage.getImage2D(), (int)weightsOut1.size(), weightsBuffer1,
-           (int)weightsOut2.size(), weightsBuffer2, cl_float2{rawNoiseModel[0], rawNoiseModel[1]},
-           outputImage->getImage2D(), linear_sampler);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), rawImage.getImage2D(),
+           sobelImage.getImage2D(), (int)weightsOut1.size(), weightsBuffer1, (int)weightsOut2.size(), weightsBuffer2,
+           cl_float2{rawNoiseModel[0], rawNoiseModel[1]}, outputImage->getImage2D(), linear_sampler);
 }
 
-void gaussianBlurImage(gls::OpenCLContext* glsContext,
-                       const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, float radius,
-                       gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+void gaussianBlurImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                       float radius, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -731,8 +679,8 @@ void gaussianBlurImage(gls::OpenCLContext* glsContext,
                                         >(program, "gaussianBlurImage");
 
         // Schedule the kernel on the GPU
-        kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-               inputImage.getImage2D(), radius, outputImage->getImage2D());
+        kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+               radius, outputImage->getImage2D());
     } else {
         auto weightsOut = gaussianKernelBilinearWeights(radius);
 
@@ -751,16 +699,13 @@ void gaussianBlurImage(gls::OpenCLContext* glsContext,
                                         >(program, "sampledConvolutionImage");
 
         // Schedule the kernel on the GPU
-        kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-               inputImage.getImage2D(), (int)weightsOut.size(), weightsBuffer,
-               outputImage->getImage2D(), linear_sampler);
+        kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+               (int)weightsOut.size(), weightsBuffer, outputImage->getImage2D(), linear_sampler);
     }
 }
 
-void blueNoiseImage(gls::OpenCLContext* glsContext,
-                    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                    const gls::cl_image_2d<gls::luma_pixel_16>& blueNoiseImage,
-                    gls::Vector<2> lumaVariance,
+void blueNoiseImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                    const gls::cl_image_2d<gls::luma_pixel_16>& blueNoiseImage, gls::Vector<2> lumaVariance,
                     gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
@@ -773,18 +718,15 @@ void blueNoiseImage(gls::OpenCLContext* glsContext,
                                     cl::Sampler   // linear_sampler
                                     >(program, "blueNoiseImage");
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_REPEAT, CL_FILTER_LINEAR);
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), blueNoiseImage.getImage2D(), {lumaVariance[0], lumaVariance[1]},
-           outputImage->getImage2D(), linear_sampler);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           blueNoiseImage.getImage2D(), {lumaVariance[0], lumaVariance[1]}, outputImage->getImage2D(), linear_sampler);
 }
 
-void blendHighlightsImage(gls::OpenCLContext* glsContext,
-                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, float clip,
-                          gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+void blendHighlightsImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          float clip, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -795,14 +737,12 @@ void blendHighlightsImage(gls::OpenCLContext* glsContext,
                                     >(program, "blendHighlightsImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), clip, outputImage->getImage2D());
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(), clip,
+           outputImage->getImage2D());
 }
 
-YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
-                         const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage,
-                         float exposure_multiplier) {
+YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                         const gls::cl_image_2d<gls::luma_alpha_pixel_float>& sobelImage, float exposure_multiplier) {
     gls::cl_image_2d<gls::rgba_pixel_float> noiseStats(glsContext->clContext(), inputImage.width, inputImage.height);
     YCbCrNoiseStatistics(glsContext, inputImage, sobelImage, &noiseStats);
     // applyKernel(glsContext, "noiseStatistics_old", inputImage, &noiseStats);
@@ -859,8 +799,10 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
     });
     err2 /= N;
 
-//    LOG_INFO(TAG) << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-//              << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels"<< std::endl;
+    //    LOG_INFO(TAG) << "1) Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB <<
+    //    ", MSE: " << sqrt(err2)
+    //              << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height)
+    //              << "% pixels"<< std::endl;
 
     // Update the maximum variance with the model
     varianceMax = nlfB;
@@ -903,11 +845,13 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext,
         nlfB = max((N * s_xy - s_x * s_y) / (N * s_xx - s_x * s_x), 1e-8);
         nlfA = max((s_y - nlfB * s_x) / N, 1e-8);
 
-        LOG_INFO(TAG) << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-                      << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+        LOG_INFO(TAG) << "Pyramid NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB
+                      << ", MSE: " << sqrt(newErr2) << " on " << std::setprecision(1) << std::fixed
+                      << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
     } else {
-        LOG_INFO(TAG) << "*** WARNING *** Pyramid NLF second iteration is worse: MSE: " << sqrt(newErr2)
-                      << " on " << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height) << "% pixels" << std::endl;
+        LOG_INFO(TAG) << "*** WARNING *** Pyramid NLF second iteration is worse: MSE: " << sqrt(newErr2) << " on "
+                      << std::setprecision(1) << std::fixed << 100 * N / (inputImage.width * inputImage.height)
+                      << "% pixels" << std::endl;
     }
 
     // assert(all(newErr2 < err2));
@@ -938,26 +882,22 @@ struct line_model {
 
 template <typename T>
 struct ImageVectorPairAdapter {
-    ImageVectorPairAdapter(const gls::image<T>& mean, const gls::image<T>& var)
-        : _mean(mean), _var(var) {
+    ImageVectorPairAdapter(const gls::image<T>& mean, const gls::image<T>& var) : _mean(mean), _var(var) {
         assert(mean.pixels().size() == var.pixels().size());
     }
 
     const gls::image<T>& _mean;
     const gls::image<T>& _var;
 
-    const sample<T> operator[](size_t index) const {
-        return sample<T>{_mean.pixels()[index], _var.pixels()[index]};
-    }
+    const sample<T> operator[](size_t index) const { return sample<T>{_mean.pixels()[index], _var.pixels()[index]}; }
 
     size_t size() const { return _mean.pixels().size(); }
 };
 
 typedef ImageVectorPairAdapter<gls::rgba_pixel_float> RGBAImageVectorPairAdapter;
 
-class RGBALineEstimator
-    : virtual public RTL::Estimator<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>,
-                                    RGBAImageVectorPairAdapter> {
+class RGBALineEstimator : virtual public RTL::Estimator<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>,
+                                                        RGBAImageVectorPairAdapter> {
    public:
     virtual line_model<gls::Vector<4>> ComputeModel(const RGBAImageVectorPairAdapter& data,
                                                     const std::set<int>& samples) {
@@ -986,17 +926,14 @@ class RGBALineEstimator
         return line_model<gls::Vector<4>>{nlfA, nlfB};
     }
 
-    virtual float ComputeError(const line_model<gls::Vector<4>>& model,
-                               const sample<gls::rgba_pixel_float>& sample) {
-        const auto diff =
-            gls::Vector<4>(sample.var.v) - (model.a + model.b * gls::Vector<4>(sample.mean.v));
+    virtual float ComputeError(const line_model<gls::Vector<4>>& model, const sample<gls::rgba_pixel_float>& sample) {
+        const auto diff = gls::Vector<4>(sample.var.v) - (model.a + model.b * gls::Vector<4>(sample.mean.v));
 
         return sqrt(dot(diff, diff));
     }
 };
 
-void dumpNoiseImage(const gls::image<gls::rgba_pixel_float>& image, float a, float b,
-                    const std::string& name) {
+void dumpNoiseImage(const gls::image<gls::rgba_pixel_float>& image, float a, float b, const std::string& name) {
     gls::image<gls::luma_pixel_16> luma(image.size());
 
     luma.apply([&image, a, b](gls::luma_pixel_16* p, int x, int y) {
@@ -1007,24 +944,17 @@ void dumpNoiseImage(const gls::image<gls::rgba_pixel_float>& image, float a, flo
 
 // kernel void despeckleRawBlackImage(read_only image2d_t rawImage, int bayerPattern, write_only
 // image2d_t despeckledImage);
-void despeckleRawBlackImage(gls::OpenCLContext* glsContext,
-                            const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                            BayerPattern bayerPattern,
-                            gls::cl_image_2d<gls::luma_pixel_float>* despeckledImage) {}
+void despeckleRawBlackImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                            BayerPattern bayerPattern, gls::cl_image_2d<gls::luma_pixel_float>* despeckledImage) {}
 
-RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
-                     const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
-                     const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage,
-                     float exposure_multiplier, BayerPattern bayerPattern) {
-    gls::cl_image_2d<gls::rgba_pixel_float> meanImage(glsContext->clContext(), rawImage.width / 2,
-                                                      rawImage.height / 2);
-    gls::cl_image_2d<gls::rgba_pixel_float> varImage(glsContext->clContext(), rawImage.width / 2,
-                                                     rawImage.height / 2);
-    gls::cl_image_2d<gls::rgba_pixel_float> kurtImage(glsContext->clContext(), rawImage.width / 2,
-                                                      rawImage.height / 2);
+RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                     const gls::cl_image_2d<gls::rgba_pixel_float>& sobelImage, float exposure_multiplier,
+                     BayerPattern bayerPattern) {
+    gls::cl_image_2d<gls::rgba_pixel_float> meanImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
+    gls::cl_image_2d<gls::rgba_pixel_float> varImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
+    gls::cl_image_2d<gls::rgba_pixel_float> kurtImage(glsContext->clContext(), rawImage.width / 2, rawImage.height / 2);
 
-    rawNoiseStatistics(glsContext, rawImage, bayerPattern, sobelImage, &meanImage, &varImage,
-                       &kurtImage);
+    rawNoiseStatistics(glsContext, rawImage, bayerPattern, sobelImage, &meanImage, &varImage, &kurtImage);
 
     const auto meanImageCpu = meanImage.mapImage();
     const auto varImageCpu = varImage.mapImage();
@@ -1042,22 +972,21 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     const bool use_ransac = false;
     if (use_ransac) {
         RGBALineEstimator estimator;
-        RTL::LMedS<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>,
-                   RGBAImageVectorPairAdapter>
-            ransac(&estimator);
+        RTL::LMedS<line_model<gls::Vector<4>>, sample<gls::rgba_pixel_float>, RGBAImageVectorPairAdapter> ransac(
+            &estimator);
         ransac.SetParamThreshold(1e-6);
         ransac.SetParamIteration(100);
 
         const auto imageVectorPairAdapter = RGBAImageVectorPairAdapter(meanImageCpu, varImageCpu);
 
         line_model<gls::Vector<4>> model;
-        float loss =
-            ransac.FindBest(model, imageVectorPairAdapter, (int)imageVectorPairAdapter.size(), 2);
+        float loss = ransac.FindBest(model, imageVectorPairAdapter, (int)imageVectorPairAdapter.size(), 2);
 
         model.a = max(model.a, 1e-8f);
         model.b = max(model.b, 1e-8f);
 
-        LOG_INFO(TAG) << "Estimated line model a: " << std::setprecision(4) << std::scientific << model.a << ", b: " << model.b << " with loss " << loss << std::endl;
+        LOG_INFO(TAG) << "Estimated line model a: " << std::setprecision(4) << std::scientific << model.a
+                      << ", b: " << model.b << " with loss " << loss << std::endl;
 
         return std::pair(model.a,  // A values
                          model.b   // B values
@@ -1119,8 +1048,9 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     });
     err2 /= N;
 
-    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(err2)
-                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB
+                  << ", MSE: " << sqrt(err2) << " on " << std::setprecision(1) << std::fixed
+                  << 100 * N / (rawImage.width * rawImage.height) << "% pixels" << std::endl;
 
     // Update the maximum variance with the model
     varianceMax = nlfB;
@@ -1163,8 +1093,9 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
 
     assert(all(newErr2 < err2));
 
-    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB << ", MSE: " << sqrt(newErr2)
-                  << " on " << std::setprecision(1) << std::fixed << 100 * N / (rawImage.width * rawImage.height) << "% pixels"<< std::endl;
+    LOG_INFO(TAG) << "RAW NLF A: " << std::setprecision(4) << std::scientific << nlfA << ", B: " << nlfB
+                  << ", MSE: " << sqrt(newErr2) << " on " << std::setprecision(1) << std::fixed
+                  << 100 * N / (rawImage.width * rawImage.height) << "% pixels" << std::endl;
 
     meanImage.unmapImage(meanImageCpu);
     varImage.unmapImage(varImageCpu);
@@ -1180,14 +1111,12 @@ RawNLF MeasureRawNLF(gls::OpenCLContext* glsContext,
     );
 }
 
-void clFuseFrames(gls::OpenCLContext* glsContext,
-                  const gls::cl_image_2d<gls::rgba_pixel_float>& referenceImage,
+void clFuseFrames(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& referenceImage,
                   const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                   const gls::cl_image_2d<gls::rgba_pixel_float>& previousFusedImage,
-                  const gls::Matrix<3, 3>& homography, const gls::Vector<3>& var_a,
-                  const gls::Vector<3>& var_b, int fusedFrames,
-                  gls::cl_image_2d<gls::rgba_pixel_float>* newFusedImage) {
+                  const gls::Matrix<3, 3>& homography, const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
+                  int fusedFrames, gls::cl_image_2d<gls::rgba_pixel_float>* newFusedImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
@@ -1207,26 +1136,23 @@ void clFuseFrames(gls::OpenCLContext* glsContext,
     cl_float3 cl_var_a = {var_a[0], var_a[1], var_a[2]};
     cl_float3 cl_var_b = {var_b[0], var_b[1], var_b[2]};
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Schedule the kernel on the GPU
     kernel(gls::OpenCLContext::buildEnqueueArgs(newFusedImage->width, newFusedImage->height),
            referenceImage.getImage2D(), gradientImage.getImage2D(), inputImage.getImage2D(),
-           previousFusedImage.getImage2D(), homography, linear_sampler, cl_var_a, cl_var_b,
-           fusedFrames, newFusedImage->getImage2D());
+           previousFusedImage.getImage2D(), homography, linear_sampler, cl_var_a, cl_var_b, fusedFrames,
+           newFusedImage->getImage2D());
 }
 
 template <typename T>
 void subtractNoiseFusedImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<T>& inputImage,
-                             const gls::cl_image_2d<T>& inputImage1,
-                             const gls::cl_image_2d<T>& inputImageDenoised1,
+                             const gls::cl_image_2d<T>& inputImage1, const gls::cl_image_2d<T>& inputImageDenoised1,
                              gls::cl_image_2d<T>* outputImage) {
     // Load the shader source
     const auto program = glsContext->loadProgram("demosaic");
 
-    const auto linear_sampler =
-        cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(glsContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     // Bind the kernel parameters
     auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
@@ -1237,16 +1163,15 @@ void subtractNoiseFusedImage(gls::OpenCLContext* glsContext, const gls::cl_image
                                     >(program, "subtractNoiseFusedImage");
 
     // Schedule the kernel on the GPU
-    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
-           inputImage.getImage2D(), inputImage1.getImage2D(), inputImageDenoised1.getImage2D(),
-           outputImage->getImage2D(), linear_sampler);
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           inputImage1.getImage2D(), inputImageDenoised1.getImage2D(), outputImage->getImage2D(), linear_sampler);
 }
 
-template void subtractNoiseFusedImage(
-    gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage1,
-    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImageDenoised1,
-    gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
+template void subtractNoiseFusedImage(gls::OpenCLContext* glsContext,
+                                      const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                                      const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage1,
+                                      const gls::cl_image_2d<gls::rgba_pixel_float>& inputImageDenoised1,
+                                      gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
 template <typename T>
 void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& inputImage,
@@ -1260,8 +1185,7 @@ void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& in
                                     cl::Sampler   // linear_sampler
                                     >(program, "rescaleImage");
 
-    const auto linear_sampler =
-        cl::Sampler(cLContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
+    const auto linear_sampler = cl::Sampler(cLContext->clContext(), true, CL_ADDRESS_CLAMP_TO_EDGE, CL_FILTER_LINEAR);
 
     kernel(
 #if __APPLE__
@@ -1272,10 +1196,8 @@ void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& in
         inputImage.getImage2D(), outputImage->getImage2D(), linear_sampler);
 }
 
-template void clRescaleImage(gls::OpenCLContext* cLContext,
-                             const gls::cl_image_2d<gls::rgba_pixel>& inputImage,
+template void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<gls::rgba_pixel>& inputImage,
                              gls::cl_image_2d<gls::rgba_pixel>* outputImage);
 
-template void clRescaleImage(gls::OpenCLContext* cLContext,
-                             const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+template void clRescaleImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                              gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);

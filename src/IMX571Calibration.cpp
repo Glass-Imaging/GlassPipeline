@@ -63,10 +63,8 @@ class IMX571Calibration : public CameraCalibration<levels> {
         }
     }
 
-    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(
-        int iso) const override {
-        const float nlf_alpha =
-            std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
+    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
+        const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
         LOG_INFO(TAG) << "IMX571 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
@@ -81,32 +79,31 @@ class IMX571Calibration : public CameraCalibration<levels> {
 
         float gradientBoost = 1 + 3 * smoothstep(0.3, 0.8, nlf_alpha);
 
-        std::array<DenoiseParameters, 5> denoiseParameters = {
-            {{.luma = lmult[0] * lerp,
-              .chroma = cmult[0] * lerp_c,
-              .chromaBoost = 2 * chromaBoost,
-              .gradientBoost = 8 * gradientBoost,
-              .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)},
-             {.luma = lmult[1] * lerp,
-              .chroma = cmult[1] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = gradientBoost,
-              .sharpening = 1.2},
-             {.luma = lmult[2] * lerp,
-              .chroma = cmult[2] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = 0,  // gradientBoost,
-              .sharpening = 1},
-             {.luma = lmult[3] * lerp,
-              .chroma = cmult[3] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = 0,  // gradientBoost,
-              .sharpening = 1},
-             {.luma = lmult[4] * lerp,
-              .chroma = cmult[4] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = 0,  // gradientBoost,
-              .sharpening = 1}}};
+        std::array<DenoiseParameters, 5> denoiseParameters = {{{.luma = lmult[0] * lerp,
+                                                                .chroma = cmult[0] * lerp_c,
+                                                                .chromaBoost = 2 * chromaBoost,
+                                                                .gradientBoost = 8 * gradientBoost,
+                                                                .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)},
+                                                               {.luma = lmult[1] * lerp,
+                                                                .chroma = cmult[1] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = gradientBoost,
+                                                                .sharpening = 1.2},
+                                                               {.luma = lmult[2] * lerp,
+                                                                .chroma = cmult[2] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = 0,  // gradientBoost,
+                                                                .sharpening = 1},
+                                                               {.luma = lmult[3] * lerp,
+                                                                .chroma = cmult[3] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = 0,  // gradientBoost,
+                                                                .sharpening = 1},
+                                                               {.luma = lmult[4] * lerp,
+                                                                .chroma = cmult[4] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = 0,  // gradientBoost,
+                                                                .sharpening = 1}}};
 
         return {nlf_alpha, denoiseParameters};
     }
@@ -118,12 +115,10 @@ class IMX571Calibration : public CameraCalibration<levels> {
                                             .saturation = 1.0,
                                             .toneCurveSlope = 3.5,
                                             .localToneMapping = true},
-                .ltmParameters = {
-                    .eps = 0.01, .shadows = 1.0, .highlights = 1.5, .detail = {1, 2.0, 2.5}}};
+                .ltmParameters = {.eps = 0.01, .shadows = 1.0, .highlights = 1.5, .detail = {1, 2.0, 2.5}}};
     }
 
-    void calibrate(RawConverter* rawConverter,
-                   const std::filesystem::path& input_dir) const override {
+    void calibrate(RawConverter* rawConverter, const std::filesystem::path& input_dir) const override {
         std::array<CalibrationEntry, 11> calibration_files = {{
             {100, "DSC00185_ISO_100.DNG", {2435, 521, 1109, 732}, false},
             {200, "DSC00188_ISO_200.DNG", {2435, 521, 1109, 732}, false},
@@ -144,14 +139,12 @@ class IMX571Calibration : public CameraCalibration<levels> {
             auto& entry = calibration_files[i];
             const auto input_path = input_dir / entry.fileName;
 
-            DemosaicParameters demosaicParameters = {
-                .rgbConversionParameters = {.localToneMapping = false}};
+            DemosaicParameters demosaicParameters = {.rgbConversionParameters = {.localToneMapping = false}};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(
-                rawConverter, input_path, &demosaicParameters, entry.iso, entry.gmb_position);
-            rgb_image->write_png_file(
-                (input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
+                                                                   entry.iso, entry.gmb_position);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
+                                      /*skip_alpha=*/true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }
@@ -172,19 +165,18 @@ gls::image<gls::rgb_pixel>::unique_ptr demosaicIMX571DNG(RawConverter* rawConver
     // const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(),
     // &dng_metadata, &exif_metadata);
 
-    auto fullInputImage = gls::image<gls::luma_pixel_16>::read_dng_file(
-        input_path.string(), &dng_metadata, &exif_metadata);
+    auto fullInputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
     // A crop size with dimensions multiples of 128 and ratio of exactly 3:2, for a total resolution
     // of 16MP
     const gls::size imageSize = {4992, 3328};
-    const gls::rectangle crop({(fullInputImage->width - imageSize.width) / 2,
-                               (fullInputImage->height - imageSize.height) / 2 + 1},
-                              imageSize);
+    const gls::rectangle crop(
+        {(fullInputImage->width - imageSize.width) / 2, (fullInputImage->height - imageSize.height) / 2 + 1},
+        imageSize);
     auto inputImage = std::make_unique<gls::image<gls::luma_pixel_16>>(*fullInputImage, crop);
 
     IMX571Calibration calibration;
-    auto demosaicParameters =
-        calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
+    auto demosaicParameters = calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
 
     unpackDNGMetadata(*inputImage, &dng_metadata, demosaicParameters.get(),
                       /*auto_white_balance=*/true, nullptr, false);
@@ -193,8 +185,7 @@ gls::image<gls::rgb_pixel>::unique_ptr demosaicIMX571DNG(RawConverter* rawConver
                                                            /*calibrateFromImage=*/false);
 
     gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(),
-                                                            demosaicedImage->width,
-                                                            demosaicedImage->height * 1.2);
+                                                            demosaicedImage->width, demosaicedImage->height * 1.2);
     clRescaleImage(rawConverter->getContext(), *demosaicedImage, &unsquishedImage);
 
     return RawConverter::convertToRGBImage(unsquishedImage);

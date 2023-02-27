@@ -21,7 +21,6 @@
 #include "demosaic.hpp"
 #include "gls_color_science.hpp"
 #include "gls_image.hpp"
-#include "ThreadPool.hpp"
 #include "gls_logging.h"
 
 static const char* TAG = "DEMOSAIC";
@@ -37,8 +36,7 @@ gls::Matrix<3, 3> cam_xyz_coeff(gls::Vector<3>* pre_mul, const gls::Matrix<3, 3>
 
     auto cam_white = rgb_cam * gls::Vector<3>({1, 1, 1});
 
-    gls::Matrix<3, 3> mPreMul = {
-        {1 / cam_white[0], 0, 0}, {0, 1 / cam_white[1], 0}, {0, 0, 1 / cam_white[2]}};
+    gls::Matrix<3, 3> mPreMul = {{1 / cam_white[0], 0, 0}, {0, 1 / cam_white[1], 0}, {0, 0, 1 / cam_white[2]}};
 
     for (int i = 0; i < 3; i++) {
         if (cam_white[i] > 0.00001) {
@@ -81,8 +79,8 @@ std::ostream& operator<<(std::ostream& os, const std::span<const float>& s) {
     return os;
 }
 
-void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats,
-                            gls::Matrix<3, 3>* cam_xyz, gls::Vector<3>* pre_mul) {
+void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats, gls::Matrix<3, 3>* cam_xyz,
+                            gls::Vector<3>* pre_mul) {
     // ColorChecker Chart under 6500-kelvin illumination
     static const gls::Matrix<24, 3> gmb_xyY = {{0.400, 0.350, 10.1},  // Dark Skin
                                                {0.377, 0.345, 35.8},  // Light Skin
@@ -135,12 +133,14 @@ void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats,
     *cam_xyz = *cam_xyz / ((*cam_xyz)[1][0] + (*cam_xyz)[1][1] + (*cam_xyz)[1][2]);
     *pre_mul = *pre_mul / (*pre_mul)[1];
 
-    LOG_INFO(TAG) << "ColorChecker Color Matrix: " << std::fixed << std::setw(6) << std::setprecision(4) << cam_xyz->span() << std::endl;
-    LOG_INFO(TAG) << "ColorChecker White Point: " << std::fixed << std::setw(6) << std::setprecision(4) << *pre_mul << std::endl;
+    LOG_INFO(TAG) << "ColorChecker Color Matrix: " << std::fixed << std::setw(6) << std::setprecision(4)
+                  << cam_xyz->span() << std::endl;
+    LOG_INFO(TAG) << "ColorChecker White Point: " << std::fixed << std::setw(6) << std::setprecision(4) << *pre_mul
+                  << std::endl;
 }
 
-void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bayerPattern,
-                uint32_t black, std::array<gls::rectangle, 24> gmb_samples) {
+void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bayerPattern, uint32_t black,
+                std::array<gls::rectangle, 24> gmb_samples) {
     // ColorChecker Chart under 6500-kelvin illumination
     static gls::Matrix<24, 3> gmb_xyY = {{0.400, 0.350, 10.1},  // Dark Skin
                                          {0.377, 0.345, 35.8},  // Light Skin
@@ -229,8 +229,8 @@ void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bay
     LOG_INFO(TAG) << "DCRaw Color Matrix:\n" << cam_xyz << std::endl;
 }
 
-void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3>* wb_mul,
-                   uint32_t white, uint32_t black, BayerPattern bayerPattern) {
+void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3>* wb_mul, uint32_t white,
+                   uint32_t black, BayerPattern bayerPattern) {
     const auto offsets = bayerOffsets[bayerPattern];
 
     std::array<float, 8> fsum{/* zero */};
@@ -272,10 +272,9 @@ void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3
     *wb_mul = *wb_mul / (*wb_mul)[1];
 }
 
-float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
-                        gls::tiff_metadata* dng_metadata, DemosaicParameters* demosaicParameters,
-                        bool auto_white_balance, const gls::rectangle* gmb_position,
-                        bool rotate_180, float* highlights) {
+float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage, gls::tiff_metadata* dng_metadata,
+                        DemosaicParameters* demosaicParameters, bool auto_white_balance,
+                        const gls::rectangle* gmb_position, bool rotate_180, float* highlights) {
     const auto color_matrix1 = getVector<float>(*dng_metadata, TIFFTAG_COLORMATRIX1);
     const auto color_matrix2 = getVector<float>(*dng_metadata, TIFFTAG_COLORMATRIX2);
 
@@ -288,7 +287,8 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
     float baseline_exposure = 0;
     getValue(*dng_metadata, TIFFTAG_BASELINEEXPOSURE, &baseline_exposure);
     float exposure_multiplier = pow(2.0, baseline_exposure);
-    LOG_INFO(TAG) << "baseline_exposure: " << baseline_exposure  << ", exposure_multiplier: " << exposure_multiplier << std::endl;
+    LOG_INFO(TAG) << "baseline_exposure: " << baseline_exposure << ", exposure_multiplier: " << exposure_multiplier
+                  << std::endl;
 
     const auto black_level_vec = getVector<float>(*dng_metadata, TIFFTAG_BLACKLEVEL);
     const auto white_level_vec = getVector<uint32_t>(*dng_metadata, TIFFTAG_WHITELEVEL);
@@ -303,18 +303,16 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
             ? BayerPattern::rggb
             : std::memcmp(cfa_pattern.data(), "\02\01\01\00", 4) == 0
                   ? BayerPattern::bggr
-                  : std::memcmp(cfa_pattern.data(), "\01\00\02\01", 4) == 0 ? BayerPattern::grbg
-                                                                            : BayerPattern::gbrg;
+                  : std::memcmp(cfa_pattern.data(), "\01\00\02\01", 4) == 0 ? BayerPattern::grbg : BayerPattern::gbrg;
 
     LOG_INFO(TAG) << "bayerPattern: " << BayerPatternName[demosaicParameters->bayerPattern] << std::endl;
 
     gls::Vector<3> pre_mul;
     gls::Matrix<3, 3> cam_xyz;
     if (gmb_position) {
-        demosaicParameters->noiseModel.rawNlf =
-            estimateRawParameters(rawImage, &cam_xyz, &pre_mul, demosaicParameters->black_level,
-                                  demosaicParameters->white_level, demosaicParameters->bayerPattern,
-                                  *gmb_position, rotate_180);
+        demosaicParameters->noiseModel.rawNlf = estimateRawParameters(
+            rawImage, &cam_xyz, &pre_mul, demosaicParameters->black_level, demosaicParameters->white_level,
+            demosaicParameters->bayerPattern, *gmb_position, rotate_180);
 
         // Obtain the rgb_cam matrix and pre_mul
         demosaicParameters->rgb_cam = cam_xyz_coeff(&pre_mul, cam_xyz);
@@ -336,15 +334,15 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
         auto minmax = std::minmax_element(std::begin(pre_mul), std::end(pre_mul));
         for (int c = 0; c < 4; c++) {
             int pre_mul_idx = c == 3 ? 1 : c;
-            (demosaicParameters->scale_mul)[c] =
-                std::max(exposure_multiplier, 1.0f) * (pre_mul[pre_mul_idx] / *minmax.first) *
-                65535.0 / (demosaicParameters->white_level - demosaicParameters->black_level);
+            (demosaicParameters->scale_mul)[c] = std::max(exposure_multiplier, 1.0f) *
+                                                 (pre_mul[pre_mul_idx] / *minmax.first) * 65535.0 /
+                                                 (demosaicParameters->white_level - demosaicParameters->black_level);
         }
 
         auto cam_to_ycbcr = cam_ycbcr(demosaicParameters->rgb_cam);
-        gls::Vector<3> cam_mul = autoWhiteBalance(
-            rawImage, cam_to_ycbcr, demosaicParameters->scale_mul, demosaicParameters->white_level,
-            demosaicParameters->black_level, demosaicParameters->bayerPattern, highlights);
+        gls::Vector<3> cam_mul =
+            autoWhiteBalance(rawImage, cam_to_ycbcr, demosaicParameters->scale_mul, demosaicParameters->white_level,
+                             demosaicParameters->black_level, demosaicParameters->bayerPattern, highlights);
 
         LOG_INFO(TAG) << "Auto White Balance: " << cam_mul << std::endl;
 
@@ -366,29 +364,27 @@ float unpackDNGMetadata(const gls::image<gls::luma_pixel_16>& rawImage,
     auto minmax = std::minmax_element(std::begin(pre_mul), std::end(pre_mul));
     for (int c = 0; c < 4; c++) {
         int pre_mul_idx = c == 3 ? 1 : c;
-        (demosaicParameters->scale_mul)[c] =
-            std::max(exposure_multiplier, 1.0f) * (pre_mul[pre_mul_idx] / *minmax.first) * 65535.0 /
-            (demosaicParameters->white_level - demosaicParameters->black_level);
+        (demosaicParameters->scale_mul)[c] = std::max(exposure_multiplier, 1.0f) *
+                                             (pre_mul[pre_mul_idx] / *minmax.first) * 65535.0 /
+                                             (demosaicParameters->white_level - demosaicParameters->black_level);
     }
     LOG_INFO(TAG) << "scale_mul: " << demosaicParameters->scale_mul << std::endl;
 
     return exposure_multiplier;
 }
 
-const char* GMBColorNames[24]{
-    "DarkSkin", "LightSkin",    "BlueSky",     "Foliage",   "BlueFlower",  "BluishGreen",
-    "Orange",   "PurplishBlue", "ModerateRed", "Purple",    "YellowGreen", "OrangeYellow",
-    "Blue",     "Green",        "Red",         "Yellow",    "Magenta",     "Cyan",
-    "White",    "Neutral_8",    "Neutral_6_5", "Neutral_5", "Neutral_3_5", "Black"};
+const char* GMBColorNames[24]{"DarkSkin", "LightSkin",    "BlueSky",     "Foliage",   "BlueFlower",  "BluishGreen",
+                              "Orange",   "PurplishBlue", "ModerateRed", "Purple",    "YellowGreen", "OrangeYellow",
+                              "Blue",     "Green",        "Red",         "Yellow",    "Magenta",     "Cyan",
+                              "White",    "Neutral_8",    "Neutral_6_5", "Neutral_5", "Neutral_3_5", "Black"};
 
 float square(float x) { return x * x; }
 
 enum { red = 0, green = 1, blue = 2, green2 = 3 };
 
 // Collect mean and variance of ColorChecker patches
-void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float black_level,
-                          float white_level, BayerPattern bayerPattern,
-                          const gls::rectangle& gmb_position, bool rotate_180,
+void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float black_level, float white_level,
+                          BayerPattern bayerPattern, const gls::rectangle& gmb_position, bool rotate_180,
                           std::array<RawPatchStats, 24>* stats) {
     gls::image<gls::luma_pixel_16> red_channel(rawImage.width / 2, rawImage.height / 2);
     gls::image<gls::luma_pixel_16> green_channel(rawImage.width / 2, rawImage.height / 2);
@@ -403,7 +399,8 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
 
     //    gls::image<gls::luma_pixel_16>* zapMama = (gls::image<gls::luma_pixel_16> *) &rawImage;
 
-    LOG_INFO(TAG) << "colorCheckerRawStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
+    LOG_INFO(TAG) << "colorCheckerRawStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", "
+                  << gmb_position.width << ", " << gmb_position.height << std::endl;
 
     int patch_width = gmb_position.width / 6;
     int patch_height = gmb_position.height / 4;
@@ -417,10 +414,9 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
     int patchIdx = 0;
     for (int row = 0; row < 4; row++) {
         for (int col = 0; col < 6; col++, patchIdx++) {
-            gls::rectangle patch =
-                alignToQuad({gmb_position.x + col * patch_width + (int)(0.25 * patch_width),
-                             gmb_position.y + row * patch_height + (int)(0.25 * patch_height),
-                             (int)(0.5 * patch_width), (int)(0.5 * patch_height)});
+            gls::rectangle patch = alignToQuad({gmb_position.x + col * patch_width + (int)(0.25 * patch_width),
+                                                gmb_position.y + row * patch_height + (int)(0.25 * patch_height),
+                                                (int)(0.5 * patch_width), (int)(0.5 * patch_height)});
 
             const int patchSamples = patch.width * patch.height / 4;
 
@@ -434,15 +430,10 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
                     const int y_off = patch.y + y;
                     const int x_off = patch.x + x;
                     gls::rgba_pixel_fp32 p = {
-                        std::clamp((rawImage[y_off + r.y][x_off + r.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp((rawImage[y_off + g.y][x_off + g.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp((rawImage[y_off + b.y][x_off + b.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp(
-                            (rawImage[y_off + g2.y][x_off + g2.x] - black_level) / white_level,
-                            0.0f, 1.0f)};
+                        std::clamp((rawImage[y_off + r.y][x_off + r.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + g.y][x_off + g.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + b.y][x_off + b.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + g2.y][x_off + g2.x] - black_level) / white_level, 0.0f, 1.0f)};
 
                     avgR += p[0];
                     avgG1 += p[1];
@@ -466,15 +457,10 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
                     const int y_off = patch.y + y;
                     const int x_off = patch.x + x;
                     gls::rgba_pixel_fp32 p = {
-                        std::clamp((rawImage[y_off + r.y][x_off + r.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp((rawImage[y_off + g.y][x_off + g.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp((rawImage[y_off + b.y][x_off + b.x] - black_level) / white_level,
-                                   0.0f, 1.0f),
-                        std::clamp(
-                            (rawImage[y_off + g2.y][x_off + g2.x] - black_level) / white_level,
-                            0.0f, 1.0f)};
+                        std::clamp((rawImage[y_off + r.y][x_off + r.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + g.y][x_off + g.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + b.y][x_off + b.x] - black_level) / white_level, 0.0f, 1.0f),
+                        std::clamp((rawImage[y_off + g2.y][x_off + g2.x] - black_level) / white_level, 0.0f, 1.0f)};
 
                     red_channel[(patch.y + y) / 2][(patch.x + x) / 2] = 0xffff * p.red;
                     green_channel[(patch.y + y) / 2][(patch.x + x) / 2] = 0xffff * p.green;
@@ -506,27 +492,28 @@ void colorCheckerRawStats(const gls::image<gls::luma_pixel_16>& rawImage, float 
         std::reverse(stats->begin(), stats->end());
     }
 
-//    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
-//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
-//                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] << ", " << (*stats)[patchIdx].mean[2] << ", " << (*stats)[patchIdx].mean[3] << "}, var: {"
-//                                          << (*stats)[patchIdx].variance[0] << ", " << (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2] << ", " << (*stats)[patchIdx].variance[3] << "}" << std::endl;
-//
-//    }
+    //    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
+    //        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
+    //                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] <<
+    //                  ", " << (*stats)[patchIdx].mean[2] << ", " << (*stats)[patchIdx].mean[3] << "}, var: {"
+    //                                          << (*stats)[patchIdx].variance[0] << ", " <<
+    //                                          (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2]
+    //                                          << ", " << (*stats)[patchIdx].variance[3] << "}" << std::endl;
+    //
+    //    }
 
     static int file_count = 0;
-    red_channel.write_png_file("/Users/fabio/red_channel" + std::to_string(file_count) + ".png",
-                               false);
-    green_channel.write_png_file("/Users/fabio/green_channel" + std::to_string(file_count) + ".png",
-                                 false);
-    blue_channel.write_png_file("/Users/fabio/blue_channel" + std::to_string(file_count) + ".png",
-                                false);
-    green2_channel.write_png_file(
-        "/Users/fabio/green2_channel" + std::to_string(file_count++) + ".png", false);
+    red_channel.write_png_file("/Users/fabio/red_channel" + std::to_string(file_count) + ".png", false);
+    green_channel.write_png_file("/Users/fabio/green_channel" + std::to_string(file_count) + ".png", false);
+    blue_channel.write_png_file("/Users/fabio/blue_channel" + std::to_string(file_count) + ".png", false);
+    green2_channel.write_png_file("/Users/fabio/green2_channel" + std::to_string(file_count++) + ".png", false);
 }
 
 // Collect mean and variance of ColorChecker patches
-void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rectangle& gmb_position, bool rotate_180, std::array<PatchStats, 24>* stats) {
-    // LOG_INFO(TAG) << "colorCheckerStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " << gmb_position.width << ", " << gmb_position.height << std::endl;
+void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rectangle& gmb_position, bool rotate_180,
+                       std::array<PatchStats, 24>* stats) {
+    // LOG_INFO(TAG) << "colorCheckerStats rectangle: " << gmb_position.x << ", " << gmb_position.y << ", " <<
+    // gmb_position.width << ", " << gmb_position.height << std::endl;
 
     int patch_width = gmb_position.width / 6;
     int patch_height = gmb_position.height / 4;
@@ -534,10 +521,9 @@ void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rect
     int patchIdx = 0;
     for (int row = 0; row < 4; row++) {
         for (int col = 0; col < 6; col++, patchIdx++) {
-            gls::rectangle patch = {
-                gmb_position.x + col * patch_width + (int)(0.25 * patch_width),
-                gmb_position.y + row * patch_height + (int)(0.25 * patch_height),
-                (int)(0.5 * patch_width), (int)(0.5 * patch_height)};
+            gls::rectangle patch = {gmb_position.x + col * patch_width + (int)(0.25 * patch_width),
+                                    gmb_position.y + row * patch_height + (int)(0.25 * patch_height),
+                                    (int)(0.5 * patch_width), (int)(0.5 * patch_height)};
 
             int patchSamples = patch.width * patch.height;
 
@@ -585,11 +571,14 @@ void colorCheckerStats(gls::image<gls::rgba_pixel_float>* image, const gls::rect
         std::reverse(stats->begin(), stats->end());
     }
 
-//    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
-//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
-//                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] << ", " << (*stats)[patchIdx].mean[2] << "}, var: {"
-//                                          << (*stats)[patchIdx].variance[0] << ", " << (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2] << "}" << std::endl;
-//    }
+    //    for (int patchIdx = 0; patchIdx < 24; patchIdx++) {
+    //        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patchIdx] << " - avg: {"
+    //                  << std::setprecision(2) << (*stats)[patchIdx].mean[0] << ", " << (*stats)[patchIdx].mean[1] <<
+    //                  ", " << (*stats)[patchIdx].mean[2] << "}, var: {"
+    //                                          << (*stats)[patchIdx].variance[0] << ", " <<
+    //                                          (*stats)[patchIdx].variance[1] << ", " << (*stats)[patchIdx].variance[2]
+    //                                          << "}" << std::endl;
+    //    }
 }
 
 // Slope Regression of a set of points
@@ -617,62 +606,41 @@ std::pair<float, float> linear_regression(const gls::Vector<N>& x, const gls::Ve
 
 // Estimate the Sensor's Noise Level Function (NLF: variance vs intensity), which is linear going
 // through zero
-gls::Vector<3> estimateNlfParameters(gls::image<gls::rgba_pixel_float>* image,
-                                     const gls::rectangle& gmb_position, bool rotate_180) {
+gls::Vector<3> estimateNlfParameters(gls::image<gls::rgba_pixel_float>* image, const gls::rectangle& gmb_position,
+                                     bool rotate_180) {
     std::array<PatchStats, 24> stats;
     colorCheckerStats(image, gmb_position, rotate_180, &stats);
 
-    gls::Vector<6> y_intensity = {
-        stats[Black].mean[0],
-        stats[Neutral_3_5].mean[0],
-        stats[Neutral_5].mean[0],
-        stats[Neutral_6_5].mean[0],
-        stats[Neutral_8].mean[0],
-        stats[White].mean[0]
-    };
+    gls::Vector<6> y_intensity = {stats[Black].mean[0],       stats[Neutral_3_5].mean[0], stats[Neutral_5].mean[0],
+                                  stats[Neutral_6_5].mean[0], stats[Neutral_8].mean[0],   stats[White].mean[0]};
 
-    gls::Vector<6> y_variance = {
-        stats[Black].variance[0],
-        stats[Neutral_3_5].variance[0],
-        stats[Neutral_5].variance[0],
-        stats[Neutral_6_5].variance[0],
-        stats[Neutral_8].variance[0],
-        stats[White].variance[0]
-    };
+    gls::Vector<6> y_variance = {stats[Black].variance[0],     stats[Neutral_3_5].variance[0],
+                                 stats[Neutral_5].variance[0], stats[Neutral_6_5].variance[0],
+                                 stats[Neutral_8].variance[0], stats[White].variance[0]};
 
-    gls::Vector<6> cb_variance = {
-        stats[Black].variance[1],
-        stats[Neutral_3_5].variance[1],
-        stats[Neutral_5].variance[1],
-        stats[Neutral_6_5].variance[1],
-        stats[Neutral_8].variance[1],
-        stats[White].variance[1]
-    };
+    gls::Vector<6> cb_variance = {stats[Black].variance[1],     stats[Neutral_3_5].variance[1],
+                                  stats[Neutral_5].variance[1], stats[Neutral_6_5].variance[1],
+                                  stats[Neutral_8].variance[1], stats[White].variance[1]};
 
-    gls::Vector<6> cr_variance = {
-        stats[Black].variance[2],
-        stats[Neutral_3_5].variance[2],
-        stats[Neutral_5].variance[2],
-        stats[Neutral_6_5].variance[2],
-        stats[Neutral_8].variance[2],
-        stats[White].variance[2]
-    };
+    gls::Vector<6> cr_variance = {stats[Black].variance[2],     stats[Neutral_3_5].variance[2],
+                                  stats[Neutral_5].variance[2], stats[Neutral_6_5].variance[2],
+                                  stats[Neutral_8].variance[2], stats[White].variance[2]};
 
-//    LOG_INFO(TAG) << "NLF Stats:" << std::endl;
-//    for (int patch = Black; patch >= White; patch--) {
-//        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patch] << ": " << std::setprecision(4) << std::scientific << stats[patch].mean[0] << ", "
-//                  << stats[patch].variance[0] << ", " << stats[patch].variance[1] << ", " << stats[patch].variance[2] << std::endl;
-//    }
+    //    LOG_INFO(TAG) << "NLF Stats:" << std::endl;
+    //    for (int patch = Black; patch >= White; patch--) {
+    //        LOG_INFO(TAG) << std::setw(12) << std::setfill(' ') << GMBColorNames[patch] << ": " <<
+    //        std::setprecision(4) << std::scientific << stats[patch].mean[0] << ", "
+    //                  << stats[patch].variance[0] << ", " << stats[patch].variance[1] << ", " <<
+    //                  stats[patch].variance[2] << std::endl;
+    //    }
 
     float y_err2;
     auto nlf_y = linear_regression(y_intensity, y_variance, &y_err2);
-    auto nlf_cb =
-        std::accumulate(cb_variance.begin(), cb_variance.end(), 0.0f) / cb_variance.size();
-    auto nlf_cr =
-        std::accumulate(cr_variance.begin(), cr_variance.end(), 0.0f) / cr_variance.size();
+    auto nlf_cb = std::accumulate(cb_variance.begin(), cb_variance.end(), 0.0f) / cb_variance.size();
+    auto nlf_cr = std::accumulate(cr_variance.begin(), cr_variance.end(), 0.0f) / cr_variance.size();
 
-    LOG_INFO(TAG) << std::setprecision(4) << std::scientific
-                  << "\nnlf_y: " << nlf_y.first << ":" << nlf_y.second << " (" << y_err2 << ")"
+    LOG_INFO(TAG) << std::setprecision(4) << std::scientific << "\nnlf_y: " << nlf_y.first << ":" << nlf_y.second
+                  << " (" << y_err2 << ")"
                   << ", nlf_cb: " << nlf_cb << ", nlf_cr: " << nlf_cr << std::endl;
 
     // NFL for Y passes by 0, just use the slope, NFL for Cb and and Cr is mostly flat, just return
@@ -680,13 +648,11 @@ gls::Vector<3> estimateNlfParameters(gls::image<gls::rgba_pixel_float>* image,
     return {nlf_y.second, nlf_cb, nlf_cr};
 }
 
-RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage,
-                             gls::Matrix<3, 3>* cam_xyz, gls::Vector<3>* pre_mul, float black_level,
-                             float white_level, BayerPattern bayerPattern,
+RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage, gls::Matrix<3, 3>* cam_xyz,
+                             gls::Vector<3>* pre_mul, float black_level, float white_level, BayerPattern bayerPattern,
                              const gls::rectangle& gmb_position, bool rotate_180) {
     std::array<RawPatchStats, 24> rawStats;
-    colorCheckerRawStats(rawImage, black_level, white_level, bayerPattern, gmb_position, rotate_180,
-                         &rawStats);
+    colorCheckerRawStats(rawImage, black_level, white_level, bayerPattern, gmb_position, rotate_180, &rawStats);
 
     gls::Vector<6> red_intensity = {rawStats[Black].mean[0],     rawStats[Neutral_3_5].mean[0],
                                     rawStats[Neutral_5].mean[0], rawStats[Neutral_6_5].mean[0],
@@ -704,25 +670,21 @@ RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage,
                                        rawStats[Neutral_5].mean[3], rawStats[Neutral_6_5].mean[3],
                                        rawStats[Neutral_8].mean[3], rawStats[White].mean[3]};
 
-    gls::Vector<6> red_variance = {
-        rawStats[Black].variance[0],     rawStats[Neutral_3_5].variance[0],
-        rawStats[Neutral_5].variance[0], rawStats[Neutral_6_5].variance[0],
-        rawStats[Neutral_8].variance[0], rawStats[White].variance[0]};
+    gls::Vector<6> red_variance = {rawStats[Black].variance[0],     rawStats[Neutral_3_5].variance[0],
+                                   rawStats[Neutral_5].variance[0], rawStats[Neutral_6_5].variance[0],
+                                   rawStats[Neutral_8].variance[0], rawStats[White].variance[0]};
 
-    gls::Vector<6> green_variance = {
-        rawStats[Black].variance[1],     rawStats[Neutral_3_5].variance[1],
-        rawStats[Neutral_5].variance[1], rawStats[Neutral_6_5].variance[1],
-        rawStats[Neutral_8].variance[1], rawStats[White].variance[1]};
+    gls::Vector<6> green_variance = {rawStats[Black].variance[1],     rawStats[Neutral_3_5].variance[1],
+                                     rawStats[Neutral_5].variance[1], rawStats[Neutral_6_5].variance[1],
+                                     rawStats[Neutral_8].variance[1], rawStats[White].variance[1]};
 
-    gls::Vector<6> blue_variance = {
-        rawStats[Black].variance[2],     rawStats[Neutral_3_5].variance[2],
-        rawStats[Neutral_5].variance[2], rawStats[Neutral_6_5].variance[2],
-        rawStats[Neutral_8].variance[2], rawStats[White].variance[2]};
+    gls::Vector<6> blue_variance = {rawStats[Black].variance[2],     rawStats[Neutral_3_5].variance[2],
+                                    rawStats[Neutral_5].variance[2], rawStats[Neutral_6_5].variance[2],
+                                    rawStats[Neutral_8].variance[2], rawStats[White].variance[2]};
 
-    gls::Vector<6> green2_variance = {
-        rawStats[Black].variance[3],     rawStats[Neutral_3_5].variance[3],
-        rawStats[Neutral_5].variance[3], rawStats[Neutral_6_5].variance[3],
-        rawStats[Neutral_8].variance[3], rawStats[White].variance[3]};
+    gls::Vector<6> green2_variance = {rawStats[Black].variance[3],     rawStats[Neutral_3_5].variance[3],
+                                      rawStats[Neutral_5].variance[3], rawStats[Neutral_6_5].variance[3],
+                                      rawStats[Neutral_8].variance[3], rawStats[White].variance[3]};
 
     // Derive color matrix
     matrixFromColorChecker(rawStats, cam_xyz, pre_mul);
@@ -733,39 +695,38 @@ RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage,
     auto nlf_b = linear_regression(blue_intensity, blue_variance, &b_err2);
     auto nlf_g2 = linear_regression(green2_intensity, green2_variance, &g2_err2);
 
-//    LOG_INFO(TAG) << std::setprecision(2) << std::scientific
-//                  << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << r_err2 << "), "
-//                  << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << g_err2 << "), "
-//                  << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << b_err2 << "), "
-//                  << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << g2_err2 << ")" << std::endl;
+    //    LOG_INFO(TAG) << std::setprecision(2) << std::scientific
+    //                  << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << r_err2 << "), "
+    //                  << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << g_err2 << "), "
+    //                  << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << b_err2 << "), "
+    //                  << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << g2_err2 << ")" <<
+    //                  std::endl;
 
-    LOG_INFO(TAG) << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): "
-                  << nlf_r.second << ", "
-                  << nlf_g.second << ", "
-                  << nlf_b.second << ", "
-                  << nlf_g2.second << std::endl;
+    LOG_INFO(TAG) << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): " << nlf_r.second << ", "
+                  << nlf_g.second << ", " << nlf_b.second << ", " << nlf_g2.second << std::endl;
 
-    return { { nlf_r.first, nlf_g.first, nlf_b.first, nlf_g2.first }, { nlf_r.second, nlf_g.second, nlf_b.second, nlf_g2.second } };
+    return {{nlf_r.first, nlf_g.first, nlf_b.first, nlf_g2.first},
+            {nlf_r.second, nlf_g.second, nlf_b.second, nlf_g2.second}};
 }
 
 gls::Vector<3> extractNlfFromColorChecker(gls::image<gls::rgba_pixel_float>* yCbCrImage,
-                                          const gls::rectangle gmb_position, bool rotate_180,
-                                          int scale) {
-    const gls::rectangle position = {(int)round(gmb_position.x / (float)scale),
-                                     (int)round(gmb_position.y / (float)scale),
-                                     (int)round(gmb_position.width / (float)scale),
-                                     (int)round(gmb_position.height / (float)scale)};
+                                          const gls::rectangle gmb_position, bool rotate_180, int scale) {
+    const gls::rectangle position = {
+        (int)round(gmb_position.x / (float)scale), (int)round(gmb_position.y / (float)scale),
+        (int)round(gmb_position.width / (float)scale), (int)round(gmb_position.height / (float)scale)};
     gls::Vector<3> nlf_parameters = estimateNlfParameters(yCbCrImage, position, rotate_180);
-    LOG_INFO(TAG) << "Scale " << scale << " nlf parameters: " << std::setprecision(4) << std::scientific << nlf_parameters[0] << ", " << nlf_parameters[1] << ", " << nlf_parameters[2] << std::endl;
+    LOG_INFO(TAG) << "Scale " << scale << " nlf parameters: " << std::setprecision(4) << std::scientific
+                  << nlf_parameters[0] << ", " << nlf_parameters[1] << ", " << nlf_parameters[2] << std::endl;
 
-//    gls::image<gls::rgb_pixel> output(yCbCrImage->width, yCbCrImage->height);
-//    for (int y = 0; y < output.height; y++) {
-//        for (int x = 0; x < output.width; x++) {
-//            const auto& p = (*yCbCrImage)[y][x];
-//            output[y][x] = {clamp_uint8(255 * p[0]), clamp_uint8(128 * p[1] + 127), clamp_uint8(128 * p[2] + 127)};
-//        }
-//    }
-//    output.write_png_file("/Users/fabio/ColorChecker" + std::to_string(scale) + ".png");
+    //    gls::image<gls::rgb_pixel> output(yCbCrImage->width, yCbCrImage->height);
+    //    for (int y = 0; y < output.height; y++) {
+    //        for (int x = 0; x < output.width; x++) {
+    //            const auto& p = (*yCbCrImage)[y][x];
+    //            output[y][x] = {clamp_uint8(255 * p[0]), clamp_uint8(128 * p[1] + 127), clamp_uint8(128 * p[2] +
+    //            127)};
+    //        }
+    //    }
+    //    output.write_png_file("/Users/fabio/ColorChecker" + std::to_string(scale) + ".png");
 
     return nlf_parameters;
 }
@@ -790,8 +751,7 @@ struct WhiteBalanceStats {
     int whitePixelsCount;
 };
 
-const gls::Matrix<3, 3> srgb_ycbcr = {
-    {0.2126, 0.7152, 0.0722}, {-0.1146, -0.3854, 0.5}, {0.5, -0.4542, -0.0458}};
+const gls::Matrix<3, 3> srgb_ycbcr = {{0.2126, 0.7152, 0.0722}, {-0.1146, -0.3854, 0.5}, {0.5, -0.4542, -0.0458}};
 
 const gls::Matrix<3, 3> ycbcr_srgb = {{
                                           1,
@@ -805,8 +765,7 @@ const gls::Matrix<3, 3> ycbcr_srgb = {{
                                       },
                                       {1, 1.8556, 0}};
 
-gls::Vector<3> readQuad(const gls::image<gls::luma_pixel_16>& rawImage, int x, int y,
-                        BayerPattern bayerPattern) {
+gls::Vector<3> readQuad(const gls::image<gls::luma_pixel_16>& rawImage, int x, int y, BayerPattern bayerPattern) {
     const auto& offsets = bayerOffsets[bayerPattern];
     const auto& Or = offsets[0];
     const auto& Og1 = offsets[1];
@@ -818,10 +777,10 @@ gls::Vector<3> readQuad(const gls::image<gls::luma_pixel_16>& rawImage, int x, i
             (float)rawImage[y + Ob.y][x + Ob.x]};
 }
 
-std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(
-    const gls::image<gls::luma_pixel_16>& rawImage, const gls::Matrix<3, 3>& rgb_ycbcr,
-    const gls::Vector<3>& scale_mul, float white, float black, BayerPattern bayerPattern,
-    float highlightsFraction) {
+std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(const gls::image<gls::luma_pixel_16>& rawImage,
+                                                      const gls::Matrix<3, 3>& rgb_ycbcr,
+                                                      const gls::Vector<3>& scale_mul, float white, float black,
+                                                      BayerPattern bayerPattern, float highlightsFraction) {
     int highlightPixels = 0;
     // Compute the average ycbcr values
     gls::Vector<3> M = {0, 0, 0};
@@ -829,8 +788,7 @@ std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(
     for (int y = 0; y < rawImage.height; y += 2) {
         for (int x = 0; x < rawImage.width; x += 2) {
             // Compute the RGB value in the target color space clipping the highlights to white
-            auto rgb =
-                (scale_mul * (readQuad(rawImage, x, y, bayerPattern) - black)) / (float)0xffff;
+            auto rgb = (scale_mul * (readQuad(rawImage, x, y, bayerPattern) - black)) / (float)0xffff;
             bool highlights = false;
             for (int c = 0; c < 3; c++) {
                 if (rgb[c] > 1.0) {
@@ -860,8 +818,7 @@ std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(
                             (uint8_t)std::clamp(sqrt(rgb[2]) * 255, 0.0f, 255.0f)};
     });
     static int image_count = 0;
-    srgb8Image.write_jpeg_file("/Users/fabio/rgbImage" + std::to_string(image_count++) + ".jpg",
-                               95);
+    srgb8Image.write_jpeg_file("/Users/fabio/rgbImage" + std::to_string(image_count++) + ".jpg", 95);
 #endif
 
     // Compute the ycbcr average absolute differences
@@ -894,8 +851,8 @@ std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(
                     YMax = Y;
                 }
 
-                size_t histEntry = std::clamp((size_t)round((rgbWhiteAverageHist.size() - 1) * Y),
-                                              0UL, rgbWhiteAverageHist.size() - 1);
+                size_t histEntry = std::clamp((size_t)round((rgbWhiteAverageHist.size() - 1) * Y), 0UL,
+                                              rgbWhiteAverageHist.size() - 1);
                 auto& entry = rgbWhiteAverageHist[histEntry];
                 entry.first += rgb;
                 entry.second++;
@@ -905,8 +862,8 @@ std::pair<gls::Vector<3>, int> autoWhiteBalanceKernel(
         }
     }
 
-    int histMaxEntry = (int)std::clamp((size_t)round((rgbWhiteAverageHist.size() - 1) * YMax), 0UL,
-                                       rgbWhiteAverageHist.size() - 1);
+    int histMaxEntry =
+        (int)std::clamp((size_t)round((rgbWhiteAverageHist.size() - 1) * YMax), 0UL, rgbWhiteAverageHist.size() - 1);
 
     if (histMaxEntry == 0) {
         return {{1, 1, 1}, 0};
@@ -940,12 +897,10 @@ float lenght(const gls::Vector<N>& vec) {
     return sqrt(sumSq);
 }
 
-gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage,
-                                const gls::Matrix<3, 3>& rgb_ycbcr,
-                                const gls::Vector<4>& scale_mul4, float white, float black,
-                                BayerPattern bayerPattern, float* highlights) {
-    const gls::Vector<3> scale_mul =
-        gls::Vector<3>{scale_mul4[0], scale_mul4[1], scale_mul4[2]} / scale_mul4[1];
+gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage, const gls::Matrix<3, 3>& rgb_ycbcr,
+                                const gls::Vector<4>& scale_mul4, float white, float black, BayerPattern bayerPattern,
+                                float* highlights) {
+    const gls::Vector<3> scale_mul = gls::Vector<3>{scale_mul4[0], scale_mul4[1], scale_mul4[2]} / scale_mul4[1];
 
     const int hTiles = 4;
     const int vTiles = 4;
@@ -961,15 +916,13 @@ gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage,
     std::array<std::array<std::future<std::pair<gls::Vector<3>, int>>, hTiles>, vTiles> results;
     for (int y = 0; y < vTiles; y++) {
         for (int x = 0; x < hTiles; x++) {
-            results[y][x] = threadPool.enqueue([x, y, tileWidth, tileHeight, rgb_ycbcr, white,
-                                                black, bayerPattern, &rawImage,
-                                                &scale_mul]() -> std::pair<gls::Vector<3>, int> {
+            results[y][x] = threadPool.enqueue([x, y, tileWidth, tileHeight, rgb_ycbcr, white, black, bayerPattern,
+                                                &rawImage, &scale_mul]() -> std::pair<gls::Vector<3>, int> {
                 int tile_x = x * tileWidth;
                 int tile_y = y * tileHeight;
-                const auto rawTile =
-                    gls::image<gls::luma_pixel_16>(rawImage, tile_x, tile_y, tileWidth, tileHeight);
-                return autoWhiteBalanceKernel(rawTile, rgb_ycbcr, scale_mul, white, black,
-                                              bayerPattern, /*highlightsFraction=*/0.01);
+                const auto rawTile = gls::image<gls::luma_pixel_16>(rawImage, tile_x, tile_y, tileWidth, tileHeight);
+                return autoWhiteBalanceKernel(rawTile, rgb_ycbcr, scale_mul, white, black, bayerPattern,
+                                              /*highlightsFraction=*/0.01);
             });
         }
     }
@@ -993,7 +946,9 @@ gls::Vector<3> autoWhiteBalance(const gls::image<gls::luma_pixel_16>& rawImage,
     auto t_end = std::chrono::high_resolution_clock::now();
     double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
     const auto diff = lenght(wbGain - scale_mul);
-    LOG_INFO(TAG) << "wbGain: " << wbGain << ", wbGain - scale_mul: " << wbGain - scale_mul << ", diffLen: " << diff << ", highlightPixels: " << highlightPixels << ", execution time: " << elapsed_time_ms << "ms." << std::endl;
+    LOG_INFO(TAG) << "wbGain: " << wbGain << ", wbGain - scale_mul: " << wbGain - scale_mul << ", diffLen: " << diff
+                  << ", highlightPixels: " << highlightPixels << ", execution time: " << elapsed_time_ms << "ms."
+                  << std::endl;
 
     return wbGain;
 }

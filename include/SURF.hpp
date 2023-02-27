@@ -44,8 +44,8 @@ class DMatch {
 class SURF {
    public:
     static std::unique_ptr<SURF> makeInstance(gls::OpenCLContext* glsContext, int width, int height,
-                                              int max_features = -1, int nOctaves = 4,
-                                              int nOctaveLayers = 2, float hessianThreshold = 0.02);
+                                              int max_features = -1, int nOctaves = 4, int nOctaveLayers = 2,
+                                              float hessianThreshold = 0.02);
 
     virtual ~SURF() {}
 
@@ -66,11 +66,9 @@ class SURF {
                                                               const gls::image<float>& image2);
 };
 
-void clRegisterAndFuse(gls::OpenCLContext* cLContext,
-                       const gls::cl_image_2d<gls::rgba_pixel>& inputImage0,
+void clRegisterAndFuse(gls::OpenCLContext* cLContext, const gls::cl_image_2d<gls::rgba_pixel>& inputImage0,
                        const gls::cl_image_2d<gls::rgba_pixel>& inputImage1,
-                       gls::cl_image_2d<gls::rgba_pixel>* outputImage,
-                       const gls::Matrix<3, 3>& homography);
+                       gls::cl_image_2d<gls::rgba_pixel>* outputImage, const gls::Matrix<3, 3>& homography);
 
 template <typename T>
 void clRegisterImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& inputImage,

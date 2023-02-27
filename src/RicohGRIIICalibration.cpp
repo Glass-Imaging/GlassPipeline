@@ -13,15 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "CameraCalibration.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
 
+#include "CameraCalibration.hpp"
 #include "demosaic.hpp"
-#include "raw_converter.hpp"
 #include "gls_logging.h"
+#include "raw_converter.hpp"
 
 static const char* TAG = "DEMOSAIC";
 
@@ -53,10 +52,8 @@ class RicohGRIIICalibration : public CameraCalibration<levels> {
         }
     }
 
-    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(
-        int iso) const override {
-        const float nlf_alpha =
-            std::clamp((log2(iso) - log2(100)) / (log2(6400) - log2(100)), 0.0, 1.0);
+    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
+        const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(6400) - log2(100)), 0.0, 1.0);
 
         LOG_INFO(TAG) << "RicohGRIIIDenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
@@ -80,30 +77,19 @@ class RicohGRIIICalibration : public CameraCalibration<levels> {
                  .chromaBoost = chromaBoost,
                  .sharpening = 1,  // 1.1
              },
-             {.luma = lmult[2] * lerp,
-              .chroma = cmult[2] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1},
-             {.luma = lmult[3] * lerp,
-              .chroma = cmult[3] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1},
-             {.luma = lmult[4] * lerp,
-              .chroma = cmult[4] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .sharpening = 1}}};
+             {.luma = lmult[2] * lerp, .chroma = cmult[2] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1},
+             {.luma = lmult[3] * lerp, .chroma = cmult[3] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1},
+             {.luma = lmult[4] * lerp, .chroma = cmult[4] * lerp_c, .chromaBoost = chromaBoost, .sharpening = 1}}};
 
         return {nlf_alpha, denoiseParameters};
     }
 
     DemosaicParameters buildDemosaicParameters() const override {
         return {.rgbConversionParameters = {.localToneMapping = false},
-                .ltmParameters = {
-                    .eps = 0.01, .shadows = 0.6, .highlights = 1.2, .detail = {1, 1.05, 1.5}}};
+                .ltmParameters = {.eps = 0.01, .shadows = 0.6, .highlights = 1.2, .detail = {1, 1.05, 1.5}}};
     }
 
-    void calibrate(RawConverter* rawConverter,
-                   const std::filesystem::path& input_dir) const override {
+    void calibrate(RawConverter* rawConverter, const std::filesystem::path& input_dir) const override {
         std::array<CalibrationEntry, 7> calibration_files = {{
             {100, "R0000914_ISO100.DNG", {2437, 506, 1123, 733}, false},
             {200, "R0000917_ISO200.DNG", {2437, 506, 1123, 733}, false},
@@ -120,14 +106,12 @@ class RicohGRIIICalibration : public CameraCalibration<levels> {
             auto& entry = calibration_files[i];
             const auto input_path = input_dir / entry.fileName;
 
-            DemosaicParameters demosaicParameters = {
-                .rgbConversionParameters = {.localToneMapping = false}};
+            DemosaicParameters demosaicParameters = {.rgbConversionParameters = {.localToneMapping = false}};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(
-                rawConverter, input_path, &demosaicParameters, entry.iso, entry.gmb_position);
-            rgb_image->write_png_file(
-                (input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
+                                                                   entry.iso, entry.gmb_position);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
+                                      /*skip_alpha=*/true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }
@@ -142,18 +126,17 @@ void calibrateRicohGRIII(RawConverter* rawConverter, const std::filesystem::path
     calibration.calibrate(rawConverter, input_dir);
 }
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIIIDNG(
-    RawConverter* rawConverter, const std::filesystem::path& input_path) {
+gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIIIDNG(RawConverter* rawConverter,
+                                                             const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(
-        input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
     RicohGRIIICalibration calibration;
-    auto demosaicParameters =
-        calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
+    auto demosaicParameters = calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
 
-    return RawConverter::convertToRGBImage(*rawConverter->runPipeline(
-        *inputImage, demosaicParameters.get(), /*calibrateFromImage=*/true));
+    return RawConverter::convertToRGBImage(
+        *rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/true));
 }
 
 // --- NLFData ---

@@ -64,10 +64,8 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
         }
     }
 
-    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(
-        int iso) const override {
-        const float nlf_alpha =
-            std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
+    std::pair<float, std::array<DenoiseParameters, levels>> getDenoiseParameters(int iso) const override {
+        const float nlf_alpha = std::clamp((log2(iso) - log2(100)) / (log2(102400) - log2(100)), 0.0, 1.0);
 
         LOG_INFO(TAG) << "Sonya6400 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
@@ -82,33 +80,32 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
         float gradientBoost = smoothstep(0.3, 0.8, nlf_alpha);
         float gradientThreshold = 1 + 0.5 * smoothstep(0.3, 0.8, nlf_alpha);
 
-        std::array<DenoiseParameters, 5> denoiseParameters = {
-            {{.luma = lmult[0] * lerp,
-              .chroma = cmult[0] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = 8 * gradientBoost,
-              .gradientThreshold = gradientThreshold,
-              .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)},
-             {.luma = lmult[1] * lerp,
-              .chroma = cmult[1] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = gradientBoost,
-              .sharpening = 1.1},
-             {.luma = lmult[2] * lerp,
-              .chroma = cmult[2] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = gradientBoost,
-              .sharpening = 1},
-             {.luma = lmult[3] * lerp,
-              .chroma = cmult[3] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = gradientBoost,
-              .sharpening = 1},
-             {.luma = lmult[4] * lerp,
-              .chroma = cmult[4] * lerp_c,
-              .chromaBoost = chromaBoost,
-              .gradientBoost = gradientBoost,
-              .sharpening = 1}}};
+        std::array<DenoiseParameters, 5> denoiseParameters = {{{.luma = lmult[0] * lerp,
+                                                                .chroma = cmult[0] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = 8 * gradientBoost,
+                                                                .gradientThreshold = gradientThreshold,
+                                                                .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)},
+                                                               {.luma = lmult[1] * lerp,
+                                                                .chroma = cmult[1] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = gradientBoost,
+                                                                .sharpening = 1.1},
+                                                               {.luma = lmult[2] * lerp,
+                                                                .chroma = cmult[2] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = gradientBoost,
+                                                                .sharpening = 1},
+                                                               {.luma = lmult[3] * lerp,
+                                                                .chroma = cmult[3] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = gradientBoost,
+                                                                .sharpening = 1},
+                                                               {.luma = lmult[4] * lerp,
+                                                                .chroma = cmult[4] * lerp_c,
+                                                                .chromaBoost = chromaBoost,
+                                                                .gradientBoost = gradientBoost,
+                                                                .sharpening = 1}}};
 
         return {nlf_alpha, denoiseParameters};
     }
@@ -127,8 +124,7 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
                                   .detail = {1, 1.2, 2.0}}};
     }
 
-    void calibrate(RawConverter* rawConverter,
-                   const std::filesystem::path& input_dir) const override {
+    void calibrate(RawConverter* rawConverter, const std::filesystem::path& input_dir) const override {
         std::array<CalibrationEntry, 11> calibration_files = {{
             {100, "DSC00185_ISO_100.DNG", {2435, 521, 1109, 732}, false},
             {200, "DSC00188_ISO_200.DNG", {2435, 521, 1109, 732}, false},
@@ -149,14 +145,12 @@ class Sonya6400Calibration : public CameraCalibration<levels> {
             auto& entry = calibration_files[i];
             const auto input_path = input_dir / entry.fileName;
 
-            DemosaicParameters demosaicParameters = {
-                .rgbConversionParameters = {.localToneMapping = false}};
+            DemosaicParameters demosaicParameters = {.rgbConversionParameters = {.localToneMapping = false}};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(
-                rawConverter, input_path, &demosaicParameters, entry.iso, entry.gmb_position);
-            rgb_image->write_png_file(
-                (input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
+                                                                   entry.iso, entry.gmb_position);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
+                                      /*skip_alpha=*/true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }
@@ -172,12 +166,12 @@ void calibrateSonya6400(RawConverter* rawConverter, const std::filesystem::path&
 }
 
 template <typename T>
-typename gls::image<T>::unique_ptr demosaicSonya6400RawImage(
-    RawConverter* rawConverter, gls::tiff_metadata* dng_metadata, gls::tiff_metadata* exif_metadata,
-    const gls::image<gls::luma_pixel_16>& inputImage) {
+typename gls::image<T>::unique_ptr demosaicSonya6400RawImage(RawConverter* rawConverter,
+                                                             gls::tiff_metadata* dng_metadata,
+                                                             gls::tiff_metadata* exif_metadata,
+                                                             const gls::image<gls::luma_pixel_16>& inputImage) {
     Sonya6400Calibration calibration;
-    auto demosaicParameters =
-        calibration.getDemosaicParameters(inputImage, dng_metadata, exif_metadata);
+    auto demosaicParameters = calibration.getDemosaicParameters(inputImage, dng_metadata, exif_metadata);
 
     unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(),
                       /*auto_white_balance=*/false, nullptr, false);
@@ -197,17 +191,15 @@ template typename gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400RawIma
     RawConverter* rawConverter, gls::tiff_metadata* dng_metadata, gls::tiff_metadata* exif_metadata,
     const gls::image<gls::luma_pixel_16>& inputImage);
 
-template typename gls::image<gls::rgb_pixel_16>::unique_ptr
-demosaicSonya6400RawImage<gls::rgb_pixel_16>(RawConverter* rawConverter,
-                                             gls::tiff_metadata* dng_metadata,
-                                             gls::tiff_metadata* exif_metadata,
-                                             const gls::image<gls::luma_pixel_16>& inputImage);
+template typename gls::image<gls::rgb_pixel_16>::unique_ptr demosaicSonya6400RawImage<gls::rgb_pixel_16>(
+    RawConverter* rawConverter, gls::tiff_metadata* dng_metadata, gls::tiff_metadata* exif_metadata,
+    const gls::image<gls::luma_pixel_16>& inputImage);
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(
-    RawConverter* rawConverter, const std::filesystem::path& input_path) {
+gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(RawConverter* rawConverter,
+                                                            const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(
-        input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
     return demosaicSonya6400RawImage(rawConverter, &dng_metadata, &exif_metadata, *inputImage);
 }

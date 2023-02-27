@@ -20,8 +20,8 @@ static const char* TAG = "DEMOSAIC";
 
 enum { red = 0, green = 1, blue = 2, green2 = 3 };
 
-void interpolateGreen(const gls::image<gls::luma_pixel_16>& rawImage,
-                      gls::image<gls::rgb_pixel_16>* rgbImage, BayerPattern bayerPattern) {
+void interpolateGreen(const gls::image<gls::luma_pixel_16>& rawImage, gls::image<gls::rgb_pixel_16>* rgbImage,
+                      BayerPattern bayerPattern) {
     const int width = rawImage.width;
     const int height = rawImage.height;
 
@@ -203,30 +203,27 @@ void interpolateRedBlue(gls::image<gls::rgb_pixel_16>* image, BayerPattern bayer
     }
 }
 
-gls::image<gls::rgb_pixel_16>::unique_ptr demosaicImageCPU(
-    const gls::image<gls::luma_pixel_16>& rawImage, gls::tiff_metadata* metadata,
-    bool auto_white_balance) {
+gls::image<gls::rgb_pixel_16>::unique_ptr demosaicImageCPU(const gls::image<gls::luma_pixel_16>& rawImage,
+                                                           gls::tiff_metadata* metadata, bool auto_white_balance) {
     DemosaicParameters demosaicParameters;
     unpackDNGMetadata(rawImage, metadata, &demosaicParameters, auto_white_balance, nullptr, false);
 
     LOG_INFO(TAG) << "Begin demosaicing image (CPU)..." << std::endl;
 
     const auto offsets = bayerOffsets[demosaicParameters.bayerPattern];
-    gls::image<gls::luma_pixel_16> scaledRawImage =
-        gls::image<gls::luma_pixel_16>(rawImage.width, rawImage.height);
+    gls::image<gls::luma_pixel_16> scaledRawImage = gls::image<gls::luma_pixel_16>(rawImage.width, rawImage.height);
     for (int y = 0; y < rawImage.height / 2; y++) {
         for (int x = 0; x < rawImage.width / 2; x++) {
             for (int c = 0; c < 4; c++) {
                 const auto& o = offsets[c];
-                scaledRawImage[2 * y + o.y][2 * x + o.x] = clamp_uint16(
-                    demosaicParameters.scale_mul[c] *
-                    (rawImage[2 * y + o.y][2 * x + o.x] - demosaicParameters.black_level));
+                scaledRawImage[2 * y + o.y][2 * x + o.x] =
+                    clamp_uint16(demosaicParameters.scale_mul[c] *
+                                 (rawImage[2 * y + o.y][2 * x + o.x] - demosaicParameters.black_level));
             }
         }
     }
 
-    auto rgbImage =
-        std::make_unique<gls::image<gls::rgb_pixel_16>>(rawImage.width, rawImage.height);
+    auto rgbImage = std::make_unique<gls::image<gls::rgb_pixel_16>>(rawImage.width, rawImage.height);
 
     LOG_INFO(TAG) << "interpolating green channel..." << std::endl;
     interpolateGreen(scaledRawImage, rgbImage.get(), demosaicParameters.bayerPattern);
