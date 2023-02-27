@@ -109,13 +109,22 @@ class IMX571Calibration : public CameraCalibration<levels> {
     }
 
     DemosaicParameters buildDemosaicParameters() const override {
-        return {.rgbConversionParameters = {.exposureBias = -1.0,
-                                            // .blacks = 0.1,
-                                            .contrast = 1.05,
-                                            .saturation = 1.0,
-                                            .toneCurveSlope = 3.5,
-                                            .localToneMapping = true},
-                .ltmParameters = {.eps = 0.01, .shadows = 1.0, .highlights = 1.5, .detail = {1, 2.0, 2.5}}};
+        return {
+            .rgbConversionParameters = {
+                // .blacks = 0.1,
+                .contrast = 1.05,
+                .saturation = 1.0,
+                .toneCurveSlope = 3.5,
+                .exposureBias = -1.0,
+                .localToneMapping = true
+            },
+            .ltmParameters = {
+                .eps = 0.01,
+                .shadows = 1.0,
+                .highlights = 1.5,
+                .detail = { 1, 2.0, 2.5 }
+            }
+        };
     }
 
     void calibrate(RawConverter* rawConverter, const std::filesystem::path& input_dir) const override {
@@ -141,10 +150,8 @@ class IMX571Calibration : public CameraCalibration<levels> {
 
             DemosaicParameters demosaicParameters = {.rgbConversionParameters = {.localToneMapping = false}};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
-                                                                   entry.iso, entry.gmb_position);
-            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                                      /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, /* &entry.gmb_position */ nullptr);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/ true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }

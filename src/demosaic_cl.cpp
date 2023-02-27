@@ -16,6 +16,7 @@
 #include <float.h>
 
 #include <iomanip>
+#include <cmath>
 
 #include "RTL/RTL.hpp"
 #include "demosaic.hpp"
@@ -768,7 +769,7 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = {ns[1], ns[2], ns[3]};
 
-        bool validStats = !(isnan(m) || any(isnan(v)));
+        bool validStats = !(std::isnan(m) || any(isnan(v)));
 
         if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             s_x += m;
@@ -789,7 +790,7 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = {ns[1], ns[2], ns[3]};
 
-        bool validStats = !(isnan(m) || any(isnan(v)));
+        bool validStats = !(std::isnan(m) || any(isnan(v)));
 
         if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;
@@ -819,7 +820,7 @@ YCbCrNLF MeasureYCbCrNLF(gls::OpenCLContext* glsContext, const gls::cl_image_2d<
         double m = ns[0];
         double3 v = {ns[1], ns[2], ns[3]};
 
-        bool validStats = !(isnan(m) || any(isnan(v)));
+        bool validStats = !(std::isnan(m) || any(isnan(v)));
 
         if (validStats && m >= minValue && m <= maxValue && all(v <= varianceMax)) {
             auto nlfP = nlfA + nlfB * m;

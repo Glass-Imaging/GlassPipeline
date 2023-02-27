@@ -136,10 +136,8 @@ class CanonEOSRPCalibration : public CameraCalibration<levels> {
 
             DemosaicParameters demosaicParameters = {.rgbConversionParameters = {.localToneMapping = false}};
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters,
-                                                                   entry.iso, entry.gmb_position);
-            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png",
-                                      /*skip_alpha=*/true);
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, /* &entry.gmb_position */ nullptr);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/ true);
 
             noiseModel[i] = demosaicParameters.noiseModel;
         }

@@ -79,33 +79,66 @@ std::ostream& operator<<(std::ostream& os, const std::span<const float>& s) {
     return os;
 }
 
-void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats, gls::Matrix<3, 3>* cam_xyz,
-                            gls::Vector<3>* pre_mul) {
-    // ColorChecker Chart under 6500-kelvin illumination
-    static const gls::Matrix<24, 3> gmb_xyY = {{0.400, 0.350, 10.1},  // Dark Skin
-                                               {0.377, 0.345, 35.8},  // Light Skin
-                                               {0.247, 0.251, 19.3},  // Blue Sky
-                                               {0.337, 0.422, 13.3},  // Foliage
-                                               {0.265, 0.240, 24.3},  // Blue Flower
-                                               {0.261, 0.343, 43.1},  // Bluish Green
-                                               {0.506, 0.407, 30.1},  // Orange
-                                               {0.211, 0.175, 12.0},  // Purplish Blue
-                                               {0.453, 0.306, 19.8},  // Moderate Red
-                                               {0.285, 0.202, 6.6},   // Purple
-                                               {0.380, 0.489, 44.3},  // Yellow Green
-                                               {0.473, 0.438, 43.1},  // Orange Yellow
-                                               {0.187, 0.129, 6.1},   // Blue
-                                               {0.305, 0.478, 23.4},  // Green
-                                               {0.539, 0.313, 12.0},  // Red
-                                               {0.448, 0.470, 59.1},  // Yellow
-                                               {0.364, 0.233, 19.8},  // Magenta
-                                               {0.196, 0.252, 19.8},  // Cyan
-                                               {0.310, 0.316, 90.0},  // White
-                                               {0.310, 0.316, 59.1},  // Neutral 8
-                                               {0.310, 0.316, 36.2},  // Neutral 6.5
-                                               {0.310, 0.316, 19.8},  // Neutral 5
-                                               {0.310, 0.316, 9.0},   // Neutral 3.5
-                                               {0.310, 0.316, 3.1}};  // Black
+/*
+ Color Checker values validated with data from Wikipedia:
+    https://en.wikipedia.org/wiki/ColorChecker
+ and:
+    http://www.rags-int-inc.com/phototechstuff/macbethtarget/
+
+ Patch  Description	    Munsell Notation	CIE xyY	                Manufacturer's sRGB color values
+  1     Dark skin       3 YR 3.7/3.2        0.400   0.350   10.1    #735244
+  2     Light skin      2.2 YR 6.47/4.1     0.377   0.345   35.8    #c29682
+  3     Blue sky        4.3 PB 4.95/5.5     0.247   0.251   19.3    #627a9d
+  4     Foliage         6.7 GY 4.2/4.1      0.337   0.422   13.3    #576c43
+  5     Blue flower     9.7 PB 5.47/6.7     0.265   0.240   24.3    #8580b1
+  6     Bluish green    2.5 BG 7/6          0.261   0.343   43.1    #67bdaa
+  7     Orange          5 YR 6/11           0.506   0.407   30.1    #d67e2c
+  8     Purplish blue   7.5 PB 4/10.7       0.211   0.175   12.0    #505ba6
+  9     Moderate red    2.5 R 5/10          0.453   0.306   19.8    #c15a63
+ 10     Purple          5 P 3/7             0.285   0.202   6.6     #5e3c6c
+ 11     Yellow green    5 GY 7.1/9.1        0.380   0.489   44.3    #9dbc40
+ 12     Orange yellow   10 YR 7/10.5        0.473   0.438   43.1    #e0a32e
+ 13     Blue            7.5 PB 2.9/12.7     0.187   0.129   6.1     #383d96
+ 14     Green           0.25 G 5.4/9.6      0.305   0.478   23.4    #469449
+ 15     Red             5 R 4/12            0.539   0.313   12.0    #af363c
+ 16     Yellow          5 Y 8/11.1          0.448   0.470   59.1    #e7c71f
+ 17     Magenta         2.5 RP 5/12         0.364   0.233   19.8    #bb5695
+ 18     Cyan            5 B 5/8             0.196   0.252   19.8    #0885a1
+ 19     White           N 9.5/              0.310   0.316   90.0    #f3f3f2
+ 20     Neutral 8       N 8/                0.310   0.316   59.1    #c8c8c8
+ 21     Neutral 6.5     N 6.5/              0.310   0.316   36.2    #a0a0a0
+ 22     Neutral 5       N 5/                0.310   0.316   19.8    #7a7a7a
+ 23     Neutral 3.5     N 3.5/              0.310   0.316   9.0     #555555
+ 24     Black           N 2/                0.310   0.316   3.1     #343434
+ */
+
+void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats, gls::Matrix<3, 3>* cam_xyz, gls::Vector<3>* pre_mul) {
+// ColorChecker Chart under 6500-kelvin illumination
+  static const gls::Matrix<24, 3> gmb_xyY = {
+    { 0.400, 0.350, 10.1 },        // Dark Skin
+    { 0.377, 0.345, 35.8 },        // Light Skin
+    { 0.247, 0.251, 19.3 },        // Blue Sky
+    { 0.337, 0.422, 13.3 },        // Foliage
+    { 0.265, 0.240, 24.3 },        // Blue Flower
+    { 0.261, 0.343, 43.1 },        // Bluish Green
+    { 0.506, 0.407, 30.1 },        // Orange
+    { 0.211, 0.175, 12.0 },        // Purplish Blue
+    { 0.453, 0.306, 19.8 },        // Moderate Red
+    { 0.285, 0.202, 6.6  },        // Purple
+    { 0.380, 0.489, 44.3 },        // Yellow Green
+    { 0.473, 0.438, 43.1 },        // Orange Yellow
+    { 0.187, 0.129, 6.1  },        // Blue
+    { 0.305, 0.478, 23.4 },        // Green
+    { 0.539, 0.313, 12.0 },        // Red
+    { 0.448, 0.470, 59.1 },        // Yellow
+    { 0.364, 0.233, 19.8 },        // Magenta
+    { 0.196, 0.252, 19.8 },        // Cyan
+    { 0.310, 0.316, 90.0 },        // White
+    { 0.310, 0.316, 59.1 },        // Neutral 8
+    { 0.310, 0.316, 36.2 },        // Neutral 6.5
+    { 0.310, 0.316, 19.8 },        // Neutral 5
+    { 0.310, 0.316, 9.0 },         // Neutral 3.5
+    { 0.310, 0.316, 3.1 } };       // Black
 
     gls::Matrix<24, 3> gmb_xyz;
     for (int sq = 0; sq < 24; sq++) {
@@ -139,98 +172,7 @@ void matrixFromColorChecker(const std::array<RawPatchStats, 24>& rawStats, gls::
                   << std::endl;
 }
 
-void colorcheck(const gls::image<gls::luma_pixel_16>& rawImage, BayerPattern bayerPattern, uint32_t black,
-                std::array<gls::rectangle, 24> gmb_samples) {
-    // ColorChecker Chart under 6500-kelvin illumination
-    static gls::Matrix<24, 3> gmb_xyY = {{0.400, 0.350, 10.1},  // Dark Skin
-                                         {0.377, 0.345, 35.8},  // Light Skin
-                                         {0.247, 0.251, 19.3},  // Blue Sky
-                                         {0.337, 0.422, 13.3},  // Foliage
-                                         {0.265, 0.240, 24.3},  // Blue Flower
-                                         {0.261, 0.343, 43.1},  // Bluish Green
-                                         {0.506, 0.407, 30.1},  // Orange
-                                         {0.211, 0.175, 12.0},  // Purplish Blue
-                                         {0.453, 0.306, 19.8},  // Moderate Red
-                                         {0.285, 0.202, 6.6},   // Purple
-                                         {0.380, 0.489, 44.3},  // Yellow Green
-                                         {0.473, 0.438, 43.1},  // Orange Yellow
-                                         {0.187, 0.129, 6.1},   // Blue
-                                         {0.305, 0.478, 23.4},  // Green
-                                         {0.539, 0.313, 12.0},  // Red
-                                         {0.448, 0.470, 59.1},  // Yellow
-                                         {0.364, 0.233, 19.8},  // Magenta
-                                         {0.196, 0.252, 19.8},  // Cyan
-                                         {0.310, 0.316, 90.0},  // White
-                                         {0.310, 0.316, 59.1},  // Neutral 8
-                                         {0.310, 0.316, 36.2},  // Neutral 6.5
-                                         {0.310, 0.316, 19.8},  // Neutral 5
-                                         {0.310, 0.316, 9.0},   // Neutral 3.5
-                                         {0.310, 0.316, 3.1}};  // Black
-
-    const auto offsets = bayerOffsets[bayerPattern];
-
-    auto* writeRawImage = (gls::image<gls::luma_pixel_16>*)&rawImage;
-
-    gls::Matrix<24, 4> gmb_cam;
-    gls::Matrix<24, 3> gmb_xyz;
-
-    for (int sq = 0; sq < 24; sq++) {
-        gmb_cam[sq] = {0, 0, 0, 0};
-        std::array<int, 3> count = {0, 0, 0};
-        auto patch = alignToQuad(gmb_samples[sq]);
-        for (int y = patch.y; y < patch.y + patch.height; y += 2) {
-            for (int x = patch.x; x < patch.x + patch.width; x += 2) {
-                for (int c = 0; c < 4; c++) {
-                    const auto& o = offsets[c];
-                    int val = rawImage[y + o.y][x + o.x];
-                    gmb_cam[sq][c == 3 ? 1 : c] += (float)val;
-                    count[c == 3 ? 1 : c]++;
-                    // Mark image to identify sampled areas
-                    (*writeRawImage)[y + o.y][x + o.x] = black + (val - black) / 2;
-                }
-            }
-        }
-
-        for (int c = 0; c < 3; c++) {
-            gmb_cam[sq][c] = gmb_cam[sq][c] / (float)count[c] - (float)black;
-        }
-
-        gmb_xyz[sq][0] = gmb_xyY[sq][2] * gmb_xyY[sq][0] / gmb_xyY[sq][1];
-        gmb_xyz[sq][1] = gmb_xyY[sq][2];
-        gmb_xyz[sq][2] = gmb_xyY[sq][2] * (1 - gmb_xyY[sq][0] - gmb_xyY[sq][1]) / gmb_xyY[sq][1];
-    }
-
-    gls::Matrix<24, 3> inverse = pseudoinverse(gmb_xyz);
-
-    gls::Matrix<3, 3> cam_xyz;
-    for (int pass = 0; pass < 2; pass++) {
-        for (int i = 0; i < 3 /* colors */; i++) {
-            for (int j = 0; j < 3; j++) {
-                cam_xyz[i][j] = 0;
-                for (int k = 0; k < 24; k++) cam_xyz[i][j] += gmb_cam[k][i] * inverse[k][j];
-            }
-        }
-
-        gls::Vector<3> pre_mul;
-        cam_xyz_coeff(&pre_mul, cam_xyz);
-
-        gls::Vector<4> balance;
-        for (int c = 0; c < 4; c++) {
-            balance[c] = pre_mul[c == 3 ? 1 : c] * gmb_cam[20][c];
-        }
-        for (int sq = 0; sq < 24; sq++) {
-            for (int c = 0; c < 4; c++) {
-                gmb_cam[sq][c] *= balance[c];
-            }
-        }
-    }
-
-    float norm = 1 / (cam_xyz[1][0] + cam_xyz[1][1] + cam_xyz[1][2]);
-    LOG_INFO(TAG) << "DCRaw Color Matrix:\n" << cam_xyz << std::endl;
-}
-
-void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3>* wb_mul, uint32_t white,
-                   uint32_t black, BayerPattern bayerPattern) {
+void white_balance(const gls::image<gls::luma_pixel_16>& rawImage, gls::Vector<3>* wb_mul, uint32_t white, uint32_t black, BayerPattern bayerPattern) {
     const auto offsets = bayerOffsets[bayerPattern];
 
     std::array<float, 8> fsum{/* zero */};
@@ -695,15 +637,17 @@ RawNLF estimateRawParameters(const gls::image<gls::luma_pixel_16>& rawImage, gls
     auto nlf_b = linear_regression(blue_intensity, blue_variance, &b_err2);
     auto nlf_g2 = linear_regression(green2_intensity, green2_variance, &g2_err2);
 
-    //    LOG_INFO(TAG) << std::setprecision(2) << std::scientific
-    //                  << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << r_err2 << "), "
-    //                  << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << g_err2 << "), "
-    //                  << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << b_err2 << "), "
-    //                  << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << g2_err2 << ")" <<
-    //                  std::endl;
+    LOG_INFO(TAG) << std::setprecision(2) << std::scientific
+                  << "raw nlf_r: " << nlf_r.first << ":" << nlf_r.second << " (" << std::sqrt(r_err2) << "), "
+                  << "raw nlf_g: " << nlf_g.first << ":" << nlf_g.second << " (" << std::sqrt(g_err2) << "), "
+                  << "raw nlf_b: " << nlf_b.first << ":" << nlf_b.second << " (" << std::sqrt(b_err2) << "), "
+                  << "raw nlf_g2: " << nlf_g2.first << ":" << nlf_g2.second << " (" << std::sqrt(g2_err2) << ")" << std::endl;
 
-    LOG_INFO(TAG) << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): " << nlf_r.second << ", "
-                  << nlf_g.second << ", " << nlf_b.second << ", " << nlf_g2.second << std::endl;
+//    LOG_INFO(TAG) << std::setprecision(2) << std::scientific << "raw nlf (r g b g2): "
+//                  << nlf_r.second << ", "
+//                  << nlf_g.second << ", "
+//                  << nlf_b.second << ", "
+//                  << nlf_g2.second << std::endl;
 
     return {{nlf_r.first, nlf_g.first, nlf_b.first, nlf_g2.first},
             {nlf_r.second, nlf_g.second, nlf_b.second, nlf_g2.second}};
