@@ -23,7 +23,7 @@
 
 template <size_t levels = 5>
 class CameraCalibration {
-public:
+   public:
     virtual ~CameraCalibration() {}
 
     virtual NoiseModel<levels> nlfFromIso(int iso) const = 0;
@@ -36,8 +36,8 @@ public:
 
     gls::image<gls::rgb_pixel>::unique_ptr calibrate(RawConverter* rawConverter,
                                                      const std::filesystem::path& input_path,
-                                                     DemosaicParameters* demosaicParameters,
-                                                     int iso, const gls::rectangle* gmb_position) const;
+                                                     DemosaicParameters* demosaicParameters, int iso,
+                                                     const gls::rectangle* gmb_position) const;
 
     std::unique_ptr<DemosaicParameters> getDemosaicParameters(const gls::image<gls::luma_pixel_16>& inputImage,
                                                               gls::tiff_metadata* dng_metadata,
@@ -48,16 +48,20 @@ std::unique_ptr<CameraCalibration<5>> getIPhone11Calibration();
 
 std::unique_ptr<CameraCalibration<5>> getLeicaQ2Calibration();
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicIMX571DNG(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaicIMX571DNG(RawConverter* rawConverter,
+                                                         const std::filesystem::path& input_path);
 void calibrateIMX571(RawConverter* rawConverter, const std::filesystem::path& input_dir);
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicLeicaQ2DNG(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaicLeicaQ2DNG(RawConverter* rawConverter,
+                                                          const std::filesystem::path& input_path);
 void calibrateLeicaQ2(RawConverter* rawConverter, const std::filesystem::path& input_dir);
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicCanonEOSRPDNG(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaicCanonEOSRPDNG(RawConverter* rawConverter,
+                                                             const std::filesystem::path& input_path);
 void calibrateCanonEOSRP(RawConverter* rawConverter, const std::filesystem::path& input_dir);
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(RawConverter* rawConverter,
+                                                            const std::filesystem::path& input_path);
 void calibrateSonya6400(RawConverter* rawConverter, const std::filesystem::path& input_dir);
 
 template <typename T = gls::rgb_pixel>
@@ -67,9 +71,11 @@ typename gls::image<T>::unique_ptr demosaicSonya6400RawImage(RawConverter* rawCo
                                                              const gls::image<gls::luma_pixel_16>& inputImage);
 
 void calibrateRicohGRIII(RawConverter* rawConverter, const std::filesystem::path& input_dir);
-gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIII2DNG(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIII2DNG(RawConverter* rawConverter,
+                                                              const std::filesystem::path& input_path);
 
 void calibrateiPhone11(RawConverter* rawConverter, const std::filesystem::path& input_dir);
-gls::image<gls::rgb_pixel>::unique_ptr demosaiciPhone11(RawConverter* rawConverter, const std::filesystem::path& input_path);
+gls::image<gls::rgb_pixel>::unique_ptr demosaiciPhone11(RawConverter* rawConverter,
+                                                        const std::filesystem::path& input_path);
 
 #endif /* CameraCalibration_hpp */

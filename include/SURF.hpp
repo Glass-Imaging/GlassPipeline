@@ -18,10 +18,9 @@
 
 #include <float.h>
 
+#include "feature2d.hpp"
 #include "gls_cl_image.hpp"
 #include "gls_linalg.hpp"
-
-#include "feature2d.hpp"
 
 namespace gls {
 
@@ -39,40 +38,42 @@ class DMatch {
     float distance;
 
     // less is better
-    bool operator < (const DMatch& m) const { return distance < m.distance; }
+    bool operator<(const DMatch& m) const { return distance < m.distance; }
 };
 
 class SURF {
-public:
+   public:
     static std::unique_ptr<SURF> makeInstance(gls::OpenCLContext* glsContext, int width, int height,
-                                              int max_features = -1, int nOctaves = 4,
-                                              int nOctaveLayers = 2, float hessianThreshold = 0.02);
+                                              int max_features = -1, int nOctaves = 4, int nOctaveLayers = 2,
+                                              float hessianThreshold = 0.02);
 
     virtual ~SURF() {}
 
-    virtual void integral(const gls::image<float>& img, const std::array<gls::cl_image_2d<float>::unique_ptr, 4>& sum) = 0;
+    virtual void integral(const gls::image<float>& img,
+                          const std::array<gls::cl_image_2d<float>::unique_ptr, 4>& sum) = 0;
 
-    virtual void detect(const std::array<gls::cl_image_2d<float>::unique_ptr, 4>& integralSum, std::vector<KeyPoint>* keypoints) = 0;
+    virtual void detect(const std::array<gls::cl_image_2d<float>::unique_ptr, 4>& integralSum,
+                        std::vector<KeyPoint>* keypoints) = 0;
 
-    virtual void detectAndCompute(const gls::image<float>& img, std::vector<KeyPoint>* keypoints, gls::image<float>::unique_ptr* _descriptors) = 0;
+    virtual void detectAndCompute(const gls::image<float>& img, std::vector<KeyPoint>* keypoints,
+                                  gls::image<float>::unique_ptr* _descriptors) = 0;
 
-    virtual std::vector<DMatch> matchKeyPoints(const gls::image<float>& descriptor1, const gls::image<float>& descriptor2) = 0;
+    virtual std::vector<DMatch> matchKeyPoints(const gls::image<float>& descriptor1,
+                                               const gls::image<float>& descriptor2) = 0;
 
-    static std::vector<std::pair<Point2f, Point2f>> detection(gls::OpenCLContext* cLContext, const gls::image<float>& image1, const gls::image<float>& image2);
+    static std::vector<std::pair<Point2f, Point2f>> detection(gls::OpenCLContext* cLContext,
+                                                              const gls::image<float>& image1,
+                                                              const gls::image<float>& image2);
 };
 
-void clRegisterAndFuse(gls::OpenCLContext* cLContext,
-                       const gls::cl_image_2d<gls::rgba_pixel>& inputImage0,
+void clRegisterAndFuse(gls::OpenCLContext* cLContext, const gls::cl_image_2d<gls::rgba_pixel>& inputImage0,
                        const gls::cl_image_2d<gls::rgba_pixel>& inputImage1,
-                       gls::cl_image_2d<gls::rgba_pixel>* outputImage,
-                       const gls::Matrix<3, 3>& homography);
+                       gls::cl_image_2d<gls::rgba_pixel>* outputImage, const gls::Matrix<3, 3>& homography);
 
 template <typename T>
-void clRegisterImage(gls::OpenCLContext* cLContext,
-                     const gls::cl_image_2d<T>& inputImage,
-                     gls::cl_image_2d<T>* outputImage,
-                     const gls::Matrix<3, 3>& homography);
+void clRegisterImage(gls::OpenCLContext* cLContext, const gls::cl_image_2d<T>& inputImage,
+                     gls::cl_image_2d<T>* outputImage, const gls::Matrix<3, 3>& homography);
 
-} // namespace surf
+}  // namespace gls
 
 #endif /* SURF_hpp */

@@ -25,8 +25,8 @@ struct PyramidProcessor {
     int fusedFrames;
 
     typedef gls::cl_image_2d<gls::rgba_pixel_float> imageType;
-    std::array<imageType::unique_ptr, levels-1> imagePyramid;
-    std::array<gls::cl_image_2d<gls::luma_alpha_pixel_float>::unique_ptr, levels-1> gradientPyramid;
+    std::array<imageType::unique_ptr, levels - 1> imagePyramid;
+    std::array<gls::cl_image_2d<gls::luma_alpha_pixel_float>::unique_ptr, levels - 1> gradientPyramid;
     std::array<imageType::unique_ptr, levels> subtractedImagePyramid;
     std::array<imageType::unique_ptr, levels> denoisedImagePyramid;
     std::array<imageType::unique_ptr, levels> fusionImagePyramidA;
@@ -38,17 +38,15 @@ struct PyramidProcessor {
     PyramidProcessor(gls::OpenCLContext* glsContext, int width, int height);
 
     imageType* denoise(gls::OpenCLContext* glsContext, std::array<DenoiseParameters, levels>* denoiseParameters,
-                       const imageType& image,
-                       const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                       std::array<YCbCrNLF, levels>* nlfParameters,
-                       float exposure_multiplier, bool calibrateFromImage = false);
+                       const imageType& image, const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
+                       std::array<YCbCrNLF, levels>* nlfParameters, float exposure_multiplier,
+                       bool calibrateFromImage = false);
 
     void fuseFrame(gls::OpenCLContext* glsContext, std::array<DenoiseParameters, levels>* denoiseParameters,
-                   const imageType& image,
-                   const gls::Matrix<3, 3>& homography,
+                   const imageType& image, const gls::Matrix<3, 3>& homography,
                    const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
-                   std::array<YCbCrNLF, levels>* nlfParameters,
-                   float exposure_multiplier, bool calibrateFromImage = false);
+                   std::array<YCbCrNLF, levels>* nlfParameters, float exposure_multiplier,
+                   bool calibrateFromImage = false);
 
     imageType* getFusedImage(gls::OpenCLContext* glsContext);
 };

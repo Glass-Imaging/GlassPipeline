@@ -52,8 +52,7 @@ class Evaluator {
         trueSSE = -1;
     }
 
-    bool SetGroundTruth(const Model& model, const Data& data, int N,
-                        const std::vector<int> inliers) {
+    bool SetGroundTruth(const Model& model, const Data& data, int N, const std::vector<int> inliers) {
         trueModel = model;
         trueInliers = inliers;
         noisyData.clear();
@@ -83,8 +82,7 @@ class Evaluator {
         if (trueInliers.empty()) return score;  // Check initialization
 
         for (size_t i = 0; i < inliers.size(); i++) {
-            bool found = (std::find(trueInliers.begin(), trueInliers.end(), inliers[i]) !=
-                          trueInliers.end());
+            bool found = (std::find(trueInliers.begin(), trueInliers.end(), inliers[i]) != trueInliers.end());
             if (found)
                 score.tp++;
             else
@@ -119,8 +117,7 @@ class StopWatch {
     }
 
     double GetElapse(void) {
-        std::chrono::high_resolution_clock::time_point end =
-            std::chrono::high_resolution_clock::now();
+        std::chrono::high_resolution_clock::time_point end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> time_span =
             std::chrono::duration_cast<std::chrono::duration<double>>(end - start);
         return static_cast<double>(time_span.count());

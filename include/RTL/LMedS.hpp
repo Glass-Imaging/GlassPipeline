@@ -43,8 +43,7 @@ class LMedS : virtual public RANSAC<Model, Datum, Data> {
     float EvaluateModel(const Model& model, const Data& data, int N) override {
         std::vector<float> errors(N);
         for (int i = 0; i < N; i++)
-            errors[i] =
-                fabs(RANSAC<Model, Datum, Data>::toolEstimator->ComputeError(model, data[i]));
+            errors[i] = fabs(RANSAC<Model, Datum, Data>::toolEstimator->ComputeError(model, data[i]));
         std::nth_element(errors.begin(), errors.begin() + N / 2, errors.end());
         return errors[N / 2];
     }

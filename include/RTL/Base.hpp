@@ -44,8 +44,8 @@ class Estimator {
 template <class Model, class Datum, class Data>
 class Observer {
    public:
-    virtual Data GenerateData(const Model& model, int N, std::vector<int>& inliers,
-                              float noise = 0, float ratio = 1) = 0;
+    virtual Data GenerateData(const Model& model, int N, std::vector<int>& inliers, float noise = 0,
+                              float ratio = 1) = 0;
 };
 
 }  // namespace RTL

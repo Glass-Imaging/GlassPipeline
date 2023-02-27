@@ -13,13 +13,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "CameraCalibration.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
 
+#include "CameraCalibration.hpp"
 #include "gls_logging.h"
+
+// clang-format off
 
 static const char* TAG = "DEMOSAIC";
 

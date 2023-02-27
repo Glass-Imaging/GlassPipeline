@@ -31,7 +31,7 @@ void GivensL(gls::Matrix<N, M, T>& S_, size_t m, T a, T b) {
     T c = a / r;
     T s = -b / r;
 
-// #pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < M; i++) {
         T S0 = S_[m + 0][i];
         T S1 = S_[m + 1][i];
@@ -49,7 +49,7 @@ void GivensR(gls::Matrix<N, M, T>& S_, size_t m, T a, T b) {
     T c = a / r;
     T s = -b / r;
 
-// #pragma omp parallel for
+    // #pragma omp parallel for
     for (size_t i = 0; i < N; i++) {
         T S0 = S_[i][m + 0];
         T S1 = S_[i][m + 1];
@@ -92,7 +92,7 @@ void SVD(gls::Matrix<N, N, T>& U_, gls::Matrix<N, M, T>& S_, gls::Matrix<M, M, T
                         house_vec[j] = -house_vec[j];
                     }
             }
-// #pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t k = i; k < M; k++) {
                 T dot_prod = 0;
                 for (size_t j = i; j < N; j++) {
@@ -102,7 +102,7 @@ void SVD(gls::Matrix<N, N, T>& U_, gls::Matrix<N, M, T>& S_, gls::Matrix<M, M, T
                     S_[j][k] -= dot_prod * house_vec[j];
                 }
             }
-// #pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t k = 0; k < N; k++) {
                 T dot_prod = 0;
                 for (size_t j = i; j < N; j++) {
@@ -137,7 +137,7 @@ void SVD(gls::Matrix<N, N, T>& U_, gls::Matrix<N, M, T>& S_, gls::Matrix<M, M, T
                         house_vec[j] = -house_vec[j];
                     }
             }
-// #pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t k = i; k < N; k++) {
                 T dot_prod = 0;
                 for (size_t j = i + 1; j < M; j++) {
@@ -147,7 +147,7 @@ void SVD(gls::Matrix<N, N, T>& U_, gls::Matrix<N, M, T>& S_, gls::Matrix<M, M, T
                     S_[k][j] -= dot_prod * house_vec[j];
                 }
             }
-// #pragma omp parallel for
+            // #pragma omp parallel for
             for (size_t k = 0; k < M; k++) {
                 T dot_prod = 0;
                 for (size_t j = i + 1; j < M; j++) {
@@ -244,7 +244,8 @@ void SVD(gls::Matrix<N, N, T>& U_, gls::Matrix<N, M, T>& S_, gls::Matrix<M, M, T
 }
 
 template <size_t N, size_t M, size_t DMIN = std::min(M, N), class T>
-inline void svd(const gls::Matrix<N, M, T>& A, gls::Vector<DMIN, T>& S, gls::Matrix<DMIN, M, T>& U, gls::Matrix<N, DMIN, T>& VT) {
+inline void svd(const gls::Matrix<N, M, T>& A, gls::Vector<DMIN, T>& S, gls::Matrix<DMIN, M, T>& U,
+                gls::Matrix<N, DMIN, T>& VT) {
     const constexpr size_t DMAX = std::max(M, N);
 
     auto U_ = gls::Matrix<DMAX, DMAX, T>::zeros();

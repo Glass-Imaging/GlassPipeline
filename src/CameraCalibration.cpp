@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "CameraCalibration.hpp"
-
 #include <filesystem>
 
+#include "CameraCalibration.hpp"
 #include "demosaic.hpp"
-#include "raw_converter.hpp"
 #include "gls_logging.h"
+#include "raw_converter.hpp"
 
 static const char* TAG = "DEMOSAIC";
 
@@ -27,14 +26,17 @@ template <size_t levels>
 gls::image<gls::rgb_pixel>::unique_ptr CameraCalibration<levels>::calibrate(RawConverter* rawConverter,
                                                                             const std::filesystem::path& input_path,
                                                                             DemosaicParameters* demosaicParameters,
-                                                                            int iso, const gls::rectangle* gmb_position) const {
+                                                                            int iso,
+                                                                            const gls::rectangle* gmb_position) const {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
-    unpackDNGMetadata(*inputImage, &dng_metadata, demosaicParameters, /*auto_white_balance=*/ false, gmb_position, /*rotate_180=*/ false);
+    unpackDNGMetadata(*inputImage, &dng_metadata, demosaicParameters, /*auto_white_balance=*/false, gmb_position,
+                      /*rotate_180=*/false);
 
     // See if the ISO value is present and override
-    if (getValue(exif_metadata, EXIFTAG_RECOMMENDEDEXPOSUREINDEX, (uint32_t*) &iso)) {
+    if (getValue(exif_metadata, EXIFTAG_RECOMMENDEDEXPOSUREINDEX, (uint32_t*)&iso)) {
         iso = iso;
     } else {
         iso = getVector<uint16_t>(exif_metadata, EXIFTAG_ISOSPEEDRATINGS)[0];
@@ -44,24 +46,24 @@ gls::image<gls::rgb_pixel>::unique_ptr CameraCalibration<levels>::calibrate(RawC
     demosaicParameters->noiseLevel = denoiseParameters.first;
     demosaicParameters->denoiseParameters = denoiseParameters.second;
 
-    return RawConverter::convertToRGBImage(*rawConverter->runPipeline(*inputImage, demosaicParameters, /*calibrateFromImage=*/ true));
+    return RawConverter::convertToRGBImage(
+        *rawConverter->runPipeline(*inputImage, demosaicParameters, /*calibrateFromImage=*/true));
 }
 
-template
-gls::image<gls::rgb_pixel>::unique_ptr CameraCalibration<5>::calibrate(RawConverter* rawConverter,
-                                                                       const std::filesystem::path& input_path,
-                                                                       DemosaicParameters* demosaicParameters,
-                                                                       int iso, const gls::rectangle* gmb_position) const;
+template gls::image<gls::rgb_pixel>::unique_ptr CameraCalibration<5>::calibrate(
+    RawConverter* rawConverter, const std::filesystem::path& input_path, DemosaicParameters* demosaicParameters,
+    int iso, const gls::rectangle* gmb_position) const;
 
 template <size_t levels>
-std::unique_ptr<DemosaicParameters> CameraCalibration<levels>::getDemosaicParameters(const gls::image<gls::luma_pixel_16>& inputImage,
-                                                                                     gls::tiff_metadata* dng_metadata,
-                                                                                     gls::tiff_metadata* exif_metadata) const {
+std::unique_ptr<DemosaicParameters> CameraCalibration<levels>::getDemosaicParameters(
+    const gls::image<gls::luma_pixel_16>& inputImage, gls::tiff_metadata* dng_metadata,
+    gls::tiff_metadata* exif_metadata) const {
     auto demosaicParameters = std::make_unique<DemosaicParameters>();
 
     *demosaicParameters = buildDemosaicParameters();
 
-    unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/ false, /* &gmb_position */ nullptr, /*rotate_180=*/ false);
+    unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/false,
+                      /* &gmb_position */ nullptr, /*rotate_180=*/false);
 
     uint32_t iso = 0;
     std::vector<uint16_t> iso_16;
@@ -84,8 +86,6 @@ std::unique_ptr<DemosaicParameters> CameraCalibration<levels>::getDemosaicParame
     return demosaicParameters;
 }
 
-template
-    std::unique_ptr<DemosaicParameters> CameraCalibration<5>::getDemosaicParameters(const gls::image<gls::luma_pixel_16>& inputImage,
-                                                                                    gls::tiff_metadata* dng_metadata,
-                                                                                    gls::tiff_metadata* exif_metadata) const;
-
+template std::unique_ptr<DemosaicParameters> CameraCalibration<5>::getDemosaicParameters(
+    const gls::image<gls::luma_pixel_16>& inputImage, gls::tiff_metadata* dng_metadata,
+    gls::tiff_metadata* exif_metadata) const;

@@ -113,9 +113,7 @@ class RANSAC {
         return true;
     }
 
-    virtual void Initialize(const Data& data, int N) {
-        toolUniform = std::uniform_int_distribution<int>(0, N - 1);
-    }
+    virtual void Initialize(const Data& data, int N) { toolUniform = std::uniform_int_distribution<int>(0, N - 1); }
 
     virtual void Terminate(const Model& bestModel, const Data& data, int N) {}
 

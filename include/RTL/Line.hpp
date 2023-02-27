@@ -40,9 +40,7 @@ class Point {
 
     Point(float _x, float _y) : x(_x), y(_y) {}
 
-    friend std::ostream& operator<<(std::ostream& out, const Point& p) {
-        return out << p.x << ", " << p.y;
-    }
+    friend std::ostream& operator<<(std::ostream& out, const Point& p) { return out << p.x << ", " << p.y; }
 
     float x, y;
 };
@@ -107,11 +105,10 @@ class LineEstimator : virtual public RTL::Estimator<Line, Point, std::vector<Poi
 
 class LineObserver : virtual public RTL::Observer<Line, Point, std::vector<Point> > {
    public:
-    LineObserver(Point _max = Point(640, 480), Point _min = Point(0, 0))
-        : RANGE_MIN(_min), RANGE_MAX(_max) {}
+    LineObserver(Point _max = Point(640, 480), Point _min = Point(0, 0)) : RANGE_MIN(_min), RANGE_MAX(_max) {}
 
-    virtual std::vector<Point> GenerateData(const Line& line, int N, std::vector<int>& inliers,
-                                            float noise = 0, float ratio = 1) {
+    virtual std::vector<Point> GenerateData(const Line& line, int N, std::vector<int>& inliers, float noise = 0,
+                                            float ratio = 1) {
         std::mt19937 generator;
         std::uniform_real_distribution<float> uniform(0, 1);
         std::normal_distribution<float> normal(0, 1);

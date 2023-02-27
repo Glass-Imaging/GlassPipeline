@@ -13,12 +13,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "RANSAC.hpp"
-
 #include <float.h>
 
-#include "gls_linalg.hpp"
+#include "RANSAC.hpp"
 #include "gls_geometry.hpp"
+#include "gls_linalg.hpp"
 #include "homography.hpp"
 
 #define USE_RTL true
@@ -36,12 +35,13 @@ namespace gls {
 #if USE_RTL
 
 class HomographyEstimator : public RTL::Estimator<
-                                        /*MODEL=*/ gls::Matrix<3, 3>,
-                                        /*DATUM=*/ std::pair<Point2f, Point2f>,
-                                        /*DATA=*/  std::vector<std::pair<Point2f, Point2f>>> {
-public:
+                                /*MODEL=*/gls::Matrix<3, 3>,
+                                /*DATUM=*/std::pair<Point2f, Point2f>,
+                                /*DATA=*/std::vector<std::pair<Point2f, Point2f>>> {
+   public:
     // Calculate the mean of data at the sample indices
-    virtual gls::Matrix<3, 3> ComputeModel(const std::vector<std::pair<Point2f, Point2f>>& data, const std::set<int>& samples) {
+    virtual gls::Matrix<3, 3> ComputeModel(const std::vector<std::pair<Point2f, Point2f>>& data,
+                                           const std::set<int>& samples) {
         assert(samples.size() == 4);
 
         std::vector<Point2f> selectP1(4);
@@ -69,22 +69,25 @@ public:
     }
 };
 
-gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold, int max_iterations, std::vector<int>* inlier_indices) {
+gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold,
+                         int max_iterations, std::vector<int>* inlier_indices) {
     HomographyEstimator estimator;
 #if USE_MLESAC
-    RTL::MLESAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>> > ransac(&estimator);
+    RTL::MLESAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>>> ransac(
+        &estimator);
 #else
-    RTL::RANSAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>> > ransac(&estimator);
+    RTL::RANSAC<gls::Matrix<3, 3>, std::pair<Point2f, Point2f>, std::vector<std::pair<Point2f, Point2f>>> ransac(
+        &estimator);
 #endif
     gls::Matrix<3, 3> model;
     ransac.SetParamThreshold(threshold);
     ransac.SetParamIteration(max_iterations);
-    const auto ransac_loss = ransac.FindBest(model, matchpoints, (int) matchpoints.size(), 4);
+    const auto ransac_loss = ransac.FindBest(model, matchpoints, (int)matchpoints.size(), 4);
 
     LOG_INFO(TAG) << "RTL RANSAC loss: " << ransac_loss << std::endl;
 
     // Refine RANSAC projection matrix parameters using the best interior points
-    const auto inliers = ransac.FindInliers(model, matchpoints, (int) matchpoints.size());
+    const auto inliers = ransac.FindInliers(model, matchpoints, (int)matchpoints.size());
     LOG_INFO(TAG) << "RANSAC found " << inliers.size() << " inliers" << std::endl;
 
     if (!inliers.empty()) {
@@ -114,7 +117,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
 
 #else
 
-gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold, int max_iterations, std::vector<int>* inlier_indices) {
+gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoints, float threshold,
+                         int max_iterations, std::vector<int>* inlier_indices) {
     assert(matchpoints.size() > 0);
 
     // Calculate the maximum set of interior points
@@ -124,7 +128,7 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
     std::vector<int> innerPvInd_i;
     std::vector<std::array<int, 4>> selectIndex(max_iterations);
 
-    srand((unsigned) time(NULL));  // Use time as seed, each time the random number is different
+    srand((unsigned)time(NULL));  // Use time as seed, each time the random number is different
     int pCount = (int)matchpoints.size();
 
     // generate random table
@@ -132,12 +136,11 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
         for (int j = 0; j < 4; j++) {
             int ii = 0;
             int temp = 0;
-            selectIndex[i][0] = selectIndex[i][1] = selectIndex[i][2] = selectIndex[i][3] =
-            pCount + 1;
+            selectIndex[i][0] = selectIndex[i][1] = selectIndex[i][2] = selectIndex[i][3] = pCount + 1;
             while (ii < 4) {
                 temp = rand() % pCount;
-                if (temp != selectIndex[i][0] && temp != selectIndex[i][1] &&
-                    temp != selectIndex[i][2] && temp != selectIndex[i][3]) {
+                if (temp != selectIndex[i][0] && temp != selectIndex[i][1] && temp != selectIndex[i][2] &&
+                    temp != selectIndex[i][3]) {
                     selectIndex[i][ii] = temp;
                     ii++;
                 }
@@ -205,7 +208,8 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
         }
     }
 
-    LOG_INFO(TAG) << " RANSAC interior point ratio - number of loops: " << max_innerP << ", " << matchpoints.size() << ", " << k << std::endl;
+    LOG_INFO(TAG) << " RANSAC interior point ratio - number of loops: " << max_innerP << ", " << matchpoints.size()
+                  << ", " << k << std::endl;
 
     if (!innerPvInd_i.empty()) {
         // Copy out the inliers
@@ -236,4 +240,4 @@ gls::Matrix<3, 3> RANSAC(const std::vector<std::pair<Point2f, Point2f>> matchpoi
 
 #endif
 
-} // namespace gls
+}  // namespace gls

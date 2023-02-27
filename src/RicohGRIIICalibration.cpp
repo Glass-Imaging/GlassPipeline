@@ -13,17 +13,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "CameraCalibration.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
 
+#include "CameraCalibration.hpp"
 #include "demosaic.hpp"
-#include "raw_converter.hpp"
 #include "gls_logging.h"
+#include "raw_converter.hpp"
 
 static const char* TAG = "DEMOSAIC";
+
+// clang-format off
 
 template <size_t levels = 5>
 class RicohGRIIICalibration : public CameraCalibration<levels> {
@@ -140,9 +141,9 @@ public:
                 }
             };
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, /* &entry.gmb_position */ nullptr);
-            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/ true);
-
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso,
+                                                                   /* &entry.gmb_position */ nullptr);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/true);
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
@@ -156,16 +157,18 @@ void calibrateRicohGRIII(RawConverter* rawConverter, const std::filesystem::path
     calibration.calibrate(rawConverter, input_dir);
 }
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIIIDNG(RawConverter* rawConverter, const std::filesystem::path& input_path) {
+gls::image<gls::rgb_pixel>::unique_ptr demosaicRicohGRIIIDNG(RawConverter* rawConverter,
+                                                             const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
     RicohGRIIICalibration calibration;
     auto demosaicParameters = calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
 
-    return RawConverter::convertToRGBImage(*rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/ true));
+    return RawConverter::convertToRGBImage(
+        *rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/true));
 }
-
 // --- NLFData ---
 
 template<>

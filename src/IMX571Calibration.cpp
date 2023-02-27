@@ -24,6 +24,8 @@
 
 static const char* TAG = "DEMOSAIC";
 
+// clang-format off
+
 template <size_t levels = 5>
 class IMX571Calibration : public CameraCalibration<levels> {
     static const std::array<NoiseModel<levels>, 11> NLFData;
@@ -167,9 +169,9 @@ public:
                 }
             };
 
-            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso, /* &entry.gmb_position */ nullptr);
-            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/ true);
-
+            const auto rgb_image = CameraCalibration<5>::calibrate(rawConverter, input_path, &demosaicParameters, entry.iso,
+                                                                   /* &entry.gmb_position */ nullptr);
+            rgb_image->write_png_file((input_path.parent_path() / input_path.stem()).string() + "_cal.png", /*skip_alpha=*/true);
             noiseModel[i] = demosaicParameters.noiseModel;
         }
 
@@ -185,22 +187,29 @@ void calibrateIMX571(RawConverter* rawConverter, const std::filesystem::path& in
 
 gls::image<gls::rgb_pixel>::unique_ptr demosaicIMX571DNG(RawConverter* rawConverter, const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    // const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
+    // const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata,
+    // &exif_metadata);
 
-    auto fullInputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
+    auto fullInputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
     // A crop size with dimensions multiples of 128 and ratio of exactly 3:2, for a total resolution of 16MP
-    const gls::size imageSize = { 4992, 3328 };
-    const gls::rectangle crop({(fullInputImage->width - imageSize.width) / 2, (fullInputImage->height - imageSize.height) / 2 + 1}, imageSize);
+    const gls::size imageSize = {4992, 3328};
+    const gls::rectangle crop(
+        {(fullInputImage->width - imageSize.width) / 2, (fullInputImage->height - imageSize.height) / 2 + 1},
+        imageSize);
     auto inputImage = std::make_unique<gls::image<gls::luma_pixel_16>>(*fullInputImage, crop);
 
     IMX571Calibration calibration;
     auto demosaicParameters = calibration.getDemosaicParameters(*inputImage, &dng_metadata, &exif_metadata);
 
-    unpackDNGMetadata(*inputImage, &dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/ true, nullptr, false);
+    unpackDNGMetadata(*inputImage, &dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/true, nullptr,
+                      false);
 
-    const auto demosaicedImage = rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/ false);
+    const auto demosaicedImage =
+        rawConverter->runPipeline(*inputImage, demosaicParameters.get(), /*calibrateFromImage=*/false);
 
-    gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(), demosaicedImage->width, demosaicedImage->height * 1.2);
+    gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(),
+                                                            demosaicedImage->width, demosaicedImage->height * 1.2);
     clRescaleImage(rawConverter->getContext(), *demosaicedImage, &unsquishedImage);
 
     return RawConverter::convertToRGBImage(unsquishedImage);
@@ -332,3 +341,4 @@ const std::array<NoiseModel<5>, 11> IMX571Calibration<5>::NLFData = {{
         }}
     },
 }};
+

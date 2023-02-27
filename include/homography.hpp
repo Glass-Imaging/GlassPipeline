@@ -18,8 +18,8 @@
 
 #include <vector>
 
-#include "gls_linalg.hpp"
 #include "feature2d.hpp"
+#include "gls_linalg.hpp"
 
 namespace gls {
 

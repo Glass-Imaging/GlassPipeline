@@ -13,14 +13,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "CameraCalibration.hpp"
-
 #include <array>
 #include <cmath>
 #include <filesystem>
 
+#include "CameraCalibration.hpp"
 #include "demosaic.hpp"
 #include "gls_logging.h"
+
+// clang-format off
 
 static const char* TAG = "DEMOSAIC";
 
@@ -193,35 +194,34 @@ typename gls::image<T>::unique_ptr demosaicSonya6400RawImage(RawConverter* rawCo
     Sonya6400Calibration calibration;
     auto demosaicParameters = calibration.getDemosaicParameters(inputImage, dng_metadata, exif_metadata);
 
-    unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/ false, nullptr, false);
+    unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/false, nullptr, false);
 
-    const auto demosaicedImage = rawConverter->runPipeline(inputImage, demosaicParameters.get(), /*calibrateFromImage=*/ false);
+    const auto demosaicedImage =
+        rawConverter->runPipeline(inputImage, demosaicParameters.get(), /*calibrateFromImage=*/false);
 
-//    gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(), demosaicedImage->width, demosaicedImage->height * 1.2);
-//    clRescaleImage(rawConverter->getContext(), *demosaicedImage, &unsquishedImage);
+    //    gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(),
+    //    demosaicedImage->width, demosaicedImage->height * 1.2); clRescaleImage(rawConverter->getContext(),
+    //    *demosaicedImage, &unsquishedImage);
 
     return RawConverter::convertToRGBImage<T>(*demosaicedImage);
 }
 
-template
-typename gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400RawImage<gls::rgb_pixel>(RawConverter* rawConverter,
-                                                                                          gls::tiff_metadata* dng_metadata,
-                                                                                          gls::tiff_metadata* exif_metadata,
-                                                                                          const gls::image<gls::luma_pixel_16>& inputImage);
+template typename gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400RawImage<gls::rgb_pixel>(
+    RawConverter* rawConverter, gls::tiff_metadata* dng_metadata, gls::tiff_metadata* exif_metadata,
+    const gls::image<gls::luma_pixel_16>& inputImage);
 
-template
-typename gls::image<gls::rgb_pixel_16>::unique_ptr demosaicSonya6400RawImage<gls::rgb_pixel_16>(RawConverter* rawConverter,
-                                                                                                gls::tiff_metadata* dng_metadata,
-                                                                                                gls::tiff_metadata* exif_metadata,
-                                                                                                const gls::image<gls::luma_pixel_16>& inputImage);
+template typename gls::image<gls::rgb_pixel_16>::unique_ptr demosaicSonya6400RawImage<gls::rgb_pixel_16>(
+    RawConverter* rawConverter, gls::tiff_metadata* dng_metadata, gls::tiff_metadata* exif_metadata,
+    const gls::image<gls::luma_pixel_16>& inputImage);
 
-gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(RawConverter* rawConverter, const std::filesystem::path& input_path) {
+gls::image<gls::rgb_pixel>::unique_ptr demosaicSonya6400DNG(RawConverter* rawConverter,
+                                                            const std::filesystem::path& input_path) {
     gls::tiff_metadata dng_metadata, exif_metadata;
-    const auto inputImage = gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
+    const auto inputImage =
+        gls::image<gls::luma_pixel_16>::read_dng_file(input_path.string(), &dng_metadata, &exif_metadata);
 
     return demosaicSonya6400RawImage(rawConverter, &dng_metadata, &exif_metadata, *inputImage);
 }
-
 // --- NLFData ---
 
 template<>

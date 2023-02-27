@@ -13,13 +13,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "raw_converter.hpp"
-
 #include <iomanip>
 #include <limits>
 
 #include "demosaic.hpp"
 #include "gls_logging.h"
+#include "raw_converter.hpp"
 
 static const char* TAG = "DEMOSAIC";
 
@@ -48,48 +47,47 @@ void RawConverter::allocateTextures(gls::OpenCLContext* glsContext, int width, i
 void RawConverter::allocateHighNoiseTextures(gls::OpenCLContext* glsContext, int width, int height) {
     auto clContext = glsContext->clContext();
 
-    if (!rgbaRawImage || rgbaRawImage->width != width/2 || rgbaRawImage->height != height/2) {
-        rgbaRawImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width/2, height/2);
-        denoisedRgbaRawImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width/2, height/2);
-
-//        // TODO: where do we keep the blue noise texture asset? Maybe generate this dynamically?
-//        const auto blueNoise = gls::image<gls::luma_pixel_16>::read_png_file("/Users/fabio/work/CLImage/CLImage/app/src/main/assets/HDR_L_0.png");
-//        clBlueNoise = std::make_unique<gls::cl_image_2d<gls::luma_pixel_16>>(_glsContext->clContext(), *blueNoise);
+    if (!rgbaRawImage || rgbaRawImage->width != width / 2 || rgbaRawImage->height != height / 2) {
+        rgbaRawImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width / 2, height / 2);
+        denoisedRgbaRawImage =
+            std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width / 2, height / 2);
     }
 }
 
 void RawConverter::allocateFastDemosaicTextures(gls::OpenCLContext* glsContext, int width, int height) {
     auto clContext = glsContext->clContext();
 
-    if (!clFastLinearRGBImage || clFastLinearRGBImage->width != width/2 || clFastLinearRGBImage->height != height/2) {
+    if (!clFastLinearRGBImage || clFastLinearRGBImage->width != width / 2 ||
+        clFastLinearRGBImage->height != height / 2) {
         clRawImage = std::make_unique<gls::cl_image_2d<gls::luma_pixel_16>>(clContext, width, height);
         clScaledRawImage = std::make_unique<gls::cl_image_2d<gls::luma_pixel_float>>(clContext, width, height);
-        clFastLinearRGBImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width/2, height/2);
-        clsFastRGBImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width/2, height/2);
+        clFastLinearRGBImage =
+            std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width / 2, height / 2);
+        clsFastRGBImage = std::make_unique<gls::cl_image_2d<gls::rgba_pixel_float>>(clContext, width / 2, height / 2);
     }
 }
 
 template <typename T>
 void SaveRawChannels(const gls::image<T>& rawImage, float maxVal, const std::string& basePath) {
-    gls::image<gls::luma_pixel> chan0(rawImage.width/2, rawImage.height/2);
-    gls::image<gls::luma_pixel> chan1(rawImage.width/2, rawImage.height/2);
-    gls::image<gls::luma_pixel> chan2(rawImage.width/2, rawImage.height/2);
-    gls::image<gls::luma_pixel> chan3(rawImage.width/2, rawImage.height/2);
+    gls::image<gls::luma_pixel> chan0(rawImage.width / 2, rawImage.height / 2);
+    gls::image<gls::luma_pixel> chan1(rawImage.width / 2, rawImage.height / 2);
+    gls::image<gls::luma_pixel> chan2(rawImage.width / 2, rawImage.height / 2);
+    gls::image<gls::luma_pixel> chan3(rawImage.width / 2, rawImage.height / 2);
 
-    rawImage.apply([&chan0, &chan1, &chan2, &chan3, maxVal](const T& p, int x, int y){
-        uint8_t val = 255 * std::sqrt(std::clamp((float) p, 0.0f, maxVal) / maxVal);
+    rawImage.apply([&chan0, &chan1, &chan2, &chan3, maxVal](const T& p, int x, int y) {
+        uint8_t val = 255 * std::sqrt(std::clamp((float)p, 0.0f, maxVal) / maxVal);
 
         if ((x & 0) == 0 && (y & 0) == 0) {
-            chan0[y/2][x/2] = val;
+            chan0[y / 2][x / 2] = val;
         }
         if ((x & 1) == 0 && (y & 0) == 0) {
-            chan1[y/2][x/2] = val;
+            chan1[y / 2][x / 2] = val;
         }
         if ((x & 0) == 0 && (y & 1) == 0) {
-            chan2[y/2][x/2] = val;
+            chan2[y / 2][x / 2] = val;
         }
         if ((x & 1) == 0 && (y & 1) == 0) {
-            chan3[y/2][x/2] = val;
+            chan3[y / 2][x / 2] = val;
         }
     });
     chan0.write_png_file(basePath + "0.png");
@@ -101,11 +99,9 @@ void SaveRawChannels(const gls::image<T>& rawImage, float maxVal, const std::str
 void saveGreenChannel(const gls::cl_image_2d<gls::luma_pixel_float>& clGreenImage) {
     gls::image<gls::luma_pixel> out(clGreenImage.width, clGreenImage.height);
     const auto greenImageCPU = clGreenImage.mapImage();
-    out.apply([&greenImageCPU](gls::luma_pixel* p, int x, int y){
+    out.apply([&greenImageCPU](gls::luma_pixel* p, int x, int y) {
         const auto& ip = greenImageCPU[y][x];
-        *p = gls::luma_pixel {
-            (uint8_t) (255 * std::sqrt(std::clamp((float) ip.luma, 0.0f, 1.0f)))
-        };
+        *p = gls::luma_pixel{(uint8_t)(255 * std::sqrt(std::clamp((float)ip.luma, 0.0f, 1.0f)))};
     });
     clGreenImage.unmapImage(greenImageCPU);
     static int count = 1;
@@ -113,14 +109,15 @@ void saveGreenChannel(const gls::cl_image_2d<gls::luma_pixel_float>& clGreenImag
 }
 
 std::array<gls::Vector<2>, 3> getRawVariance(const RawNLF& rawNLF) {
-    const gls::Vector<2> greenVariance = { (rawNLF.first[1] + rawNLF.first[3]) / 2, (rawNLF.second[1] + rawNLF.second[3]) / 2 };
-    const gls::Vector<2> redVariance = { rawNLF.first[0], rawNLF.second[0] };
-    const gls::Vector<2> blueVariance = { rawNLF.first[2], rawNLF.second[2] };
+    const gls::Vector<2> greenVariance = {(rawNLF.first[1] + rawNLF.first[3]) / 2,
+                                          (rawNLF.second[1] + rawNLF.second[3]) / 2};
+    const gls::Vector<2> redVariance = {rawNLF.first[0], rawNLF.second[0]};
+    const gls::Vector<2> blueVariance = {rawNLF.first[2], rawNLF.second[2]};
 
-    return { redVariance, greenVariance, blueVariance };
+    return {redVariance, greenVariance, blueVariance};
 }
 
-template<typename T>
+template <typename T>
 void dumpGradientImage(const gls::cl_image_2d<T>& image) {
     gls::image<gls::rgb_pixel> out(image.width, image.height);
     const auto image_cpu = image.mapImage();
@@ -130,14 +127,14 @@ void dumpGradientImage(const gls::cl_image_2d<T>& image) {
         // float direction = (1 + atan2(ip.y, ip.x) / M_PI) / 2;
         // float direction = atan2(abs(ip.y), ip.x) / M_PI;
         float direction = std::atan2(std::abs(ip.y), std::abs(ip.x)) / M_PI_2;
-        float magnitude = std::sqrt((float) (ip.x * ip.x + ip.y * ip.y));
+        float magnitude = std::sqrt((float)(ip.x * ip.x + ip.y * ip.y));
 
         uint8_t val = std::clamp(255 * std::sqrt(magnitude), 0.0f, 255.0f);
 
-        *p = gls::rgb_pixel {
-            (uint8_t) (val * std::lerp(1.0f, 0.0f, direction)),
+        *p = gls::rgb_pixel{
+            (uint8_t)(val * std::lerp(1.0f, 0.0f, direction)),
             0,
-            (uint8_t) (val * std::lerp(1.0f, 0.0f, 1 - direction)),
+            (uint8_t)(val * std::lerp(1.0f, 0.0f, 1 - direction)),
         };
     });
     image.unmapImage(image_cpu);
@@ -146,7 +143,8 @@ void dumpGradientImage(const gls::cl_image_2d<T>& image) {
 }
 
 gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image<gls::luma_pixel_16>& rawImage,
-                                                                DemosaicParameters* demosaicParameters, bool calibrateFromImage) {
+                                                                DemosaicParameters* demosaicParameters,
+                                                                bool calibrateFromImage) {
     LOG_INFO(TAG) << "Begin Demosaicing..." << std::endl;
 
     allocateTextures(_glsContext, rawImage.width, rawImage.height);
@@ -158,10 +156,8 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
     // Copy input data to the OpenCL input buffer
     clRawImage->copyPixelsFrom(rawImage);
 
-    scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(),
-                 demosaicParameters->bayerPattern,
-                 demosaicParameters->scale_mul,
-                 demosaicParameters->black_level / 0xffff);
+    scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern,
+                 demosaicParameters->scale_mul, demosaicParameters->black_level / 0xffff);
 
     rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
     // dumpGradientImage(*clRawSobelImage);
@@ -172,15 +168,15 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
 
     if (calibrateFromImage) {
         noiseModel->rawNlf = MeasureRawNLF(_glsContext, *clScaledRawImage, *clRawSobelImage,
-                                           demosaicParameters->exposure_multiplier,
-                                           demosaicParameters->bayerPattern);
+                                           demosaicParameters->exposure_multiplier, demosaicParameters->bayerPattern);
     }
 
     const auto rawVariance = getRawVariance(noiseModel->rawNlf);
 
     const bool high_noise_image = rawVariance[1][1] > kHighNoiseVariance;
 
-    LOG_INFO(TAG) << "Green Channel RAW Variance: " << std::scientific << rawVariance[1][1] << ", high_noise_image: " << high_noise_image << std::endl;
+    LOG_INFO(TAG) << "Green Channel RAW Variance: " << std::scientific << rawVariance[1][1]
+                  << ", high_noise_image: " << high_noise_image << std::endl;
 
     if (high_noise_image) {
         LOG_INFO(TAG) << "Despeckeling RAW Image" << std::endl;
@@ -196,90 +192,90 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
         rawRGBAToBayer(_glsContext, *denoisedRgbaRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern);
     }
 
-    gaussianBlurSobelImage(_glsContext, *clScaledRawImage, *clRawSobelImage, rawVariance[1], 1.5, 4.5, clRawGradientImage.get());
+    gaussianBlurSobelImage(_glsContext, *clScaledRawImage, *clRawSobelImage, rawVariance[1], 1.5, 4.5,
+                           clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 
-//    malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(), demosaicParameters->bayerPattern,
-//           rawVariance[0], rawVariance[1], rawVariance[2]);
+    //    malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
+    //    demosaicParameters->bayerPattern,
+    //           rawVariance[0], rawVariance[1], rawVariance[2]);
 
-    interpolateGreen(_glsContext, *clScaledRawImage, *clRawGradientImage, clGreenImage.get(), demosaicParameters->bayerPattern, rawVariance[1]);
+    interpolateGreen(_glsContext, *clScaledRawImage, *clRawGradientImage, clGreenImage.get(),
+                     demosaicParameters->bayerPattern, rawVariance[1]);
 
-    interpolateRedBlue(_glsContext, *clScaledRawImage, *clGreenImage,
-                       *clRawGradientImage, clLinearRGBImageA.get(),
+    interpolateRedBlue(_glsContext, *clScaledRawImage, *clGreenImage, *clRawGradientImage, clLinearRGBImageA.get(),
                        demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
 
-    interpolateRedBlueAtGreen(_glsContext, *clLinearRGBImageA,
-                              *clRawGradientImage, clLinearRGBImageA.get(),
+    interpolateRedBlueAtGreen(_glsContext, *clLinearRGBImageA, *clRawGradientImage, clLinearRGBImageA.get(),
                               demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
 
     // Recover clipped highlights
-    blendHighlightsImage(_glsContext, *clLinearRGBImageA, /*clip=*/ 1.0, clLinearRGBImageA.get());
+    blendHighlightsImage(_glsContext, *clLinearRGBImageA, /*clip=*/1.0, clLinearRGBImageA.get());
 
     return clLinearRGBImageA.get();
 }
 
-gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::denoise(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                                                               DemosaicParameters* demosaicParameters, bool calibrateFromImage) {
+gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::denoise(
+    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, DemosaicParameters* demosaicParameters,
+    bool calibrateFromImage) {
     NoiseModel<5>* noiseModel = &demosaicParameters->noiseModel;
 
     // Luma and Chroma Despeckling
     const auto& np = noiseModel->pyramidNlf[0];
     despeckleImage(_glsContext, inputImage,
-                   /*var_a=*/ np.first,
-                   /*var_b=*/ np.second,
-                   clLinearRGBImageB.get());
+                   /*var_a=*/np.first,
+                   /*var_b=*/np.second, clLinearRGBImageB.get());
 
-    gls::cl_image_2d<gls::rgba_pixel_float>* clDenoisedImage =
-        pyramidProcessor->denoise(_glsContext, &(demosaicParameters->denoiseParameters),
-                                  *clLinearRGBImageB,
-                                  *clRawGradientImage,
-                                  &(noiseModel->pyramidNlf), demosaicParameters->exposure_multiplier, calibrateFromImage);
+    gls::cl_image_2d<gls::rgba_pixel_float>* clDenoisedImage = pyramidProcessor->denoise(
+        _glsContext, &(demosaicParameters->denoiseParameters), *clLinearRGBImageB, *clRawGradientImage,
+        &(noiseModel->pyramidNlf), demosaicParameters->exposure_multiplier, calibrateFromImage);
 
     if (demosaicParameters->rgbConversionParameters.localToneMapping) {
         const std::array<const gls::cl_image_2d<gls::rgba_pixel_float>*, 3>& guideImage = {
-            pyramidProcessor->denoisedImagePyramid[4].get(),
-            pyramidProcessor->denoisedImagePyramid[2].get(),
-            pyramidProcessor->denoisedImagePyramid[0].get()
-        };
+            pyramidProcessor->denoisedImagePyramid[4].get(), pyramidProcessor->denoisedImagePyramid[2].get(),
+            pyramidProcessor->denoisedImagePyramid[0].get()};
         localToneMapping->createMask(_glsContext, *clDenoisedImage, guideImage, *noiseModel, *demosaicParameters);
     }
 
     // High ISO noise texture replacement
     if (clBlueNoise != nullptr) {
-        const gls::Vector<2> lumaVariance = { np.first[0], np.second[0] };
+        const gls::Vector<2> lumaVariance = {np.first[0], np.second[0]};
 
         LOG_INFO(TAG) << "Adding Blue Noise for variance: " << std::scientific << lumaVariance << std::endl;
 
         const auto grainAmount = 1 + 3 * smoothstep(4e-4, 6e-4, lumaVariance[1]);
 
-        blueNoiseImage(_glsContext, *clDenoisedImage, *clBlueNoise, 2 * grainAmount * lumaVariance, clLinearRGBImageB.get());
+        blueNoiseImage(_glsContext, *clDenoisedImage, *clBlueNoise, 2 * grainAmount * lumaVariance,
+                       clLinearRGBImageB.get());
         clDenoisedImage = clLinearRGBImageB.get();
     }
 
     return clDenoisedImage;
 }
 
-void RawConverter::fuseFrame(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, const gls::Matrix<3, 3>& homography,
-                             DemosaicParameters* demosaicParameters, bool calibrateFromImage) {
+void RawConverter::fuseFrame(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                             const gls::Matrix<3, 3>& homography, DemosaicParameters* demosaicParameters,
+                             bool calibrateFromImage) {
     NoiseModel<5>* noiseModel = &demosaicParameters->noiseModel;
     pyramidProcessor->fuseFrame(_glsContext, &(demosaicParameters->denoiseParameters), inputImage, homography,
-                                *clRawGradientImage, &(noiseModel->pyramidNlf),
-                                demosaicParameters->exposure_multiplier, calibrateFromImage);
+                                *clRawGradientImage, &(noiseModel->pyramidNlf), demosaicParameters->exposure_multiplier,
+                                calibrateFromImage);
 }
 
 gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::getFusedImage() {
     return pyramidProcessor->getFusedImage(_glsContext);
 }
 
-gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::postProcess(const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
-                                                                   const DemosaicParameters& demosaicParameters) {
+gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::postProcess(
+    const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage, const DemosaicParameters& demosaicParameters) {
     convertTosRGB(_glsContext, inputImage, localToneMapping->getMask(), clsRGBImage.get(), demosaicParameters);
 
     return clsRGBImage.get();
 }
 
 gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::runPipeline(const gls::image<gls::luma_pixel_16>& rawImage,
-                                                                   DemosaicParameters* demosaicParameters, bool calibrateFromImage) {
+                                                                   DemosaicParameters* demosaicParameters,
+                                                                   bool calibrateFromImage) {
     auto t_start = std::chrono::high_resolution_clock::now();
 
     // --- Image Demosaicing ---
@@ -308,9 +304,10 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::runPipeline(const gls::im
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
     queue.finish();
     auto t_end = std::chrono::high_resolution_clock::now();
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
-    LOG_INFO(TAG) << "OpenCL Pipeline Execution Time: " << (int) elapsed_time_ms << "ms for image of size: " << rawImage.width << " x " << rawImage.height << std::endl;
+    LOG_INFO(TAG) << "OpenCL Pipeline Execution Time: " << (int)elapsed_time_ms
+                  << "ms for image of size: " << rawImage.width << " x " << rawImage.height << std::endl;
 
     return sRGBImage;
 }
@@ -328,30 +325,33 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::runFastPipeline(const gls
 
     // --- Image Demosaicing ---
 
-    scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(), demosaicParameters.bayerPattern, demosaicParameters.scale_mul,
-                 demosaicParameters.black_level / 0xffff);
+    scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(), demosaicParameters.bayerPattern,
+                 demosaicParameters.scale_mul, demosaicParameters.black_level / 0xffff);
 
     fasteDebayer(_glsContext, *clScaledRawImage, clFastLinearRGBImage.get(), demosaicParameters.bayerPattern);
 
     // Recover clipped highlights
-    blendHighlightsImage(_glsContext, *clFastLinearRGBImage, /*clip=*/ 1.0, clFastLinearRGBImage.get());
+    blendHighlightsImage(_glsContext, *clFastLinearRGBImage, /*clip=*/1.0, clFastLinearRGBImage.get());
 
     // --- Image Post Processing ---
 
-    convertTosRGB(_glsContext, *clFastLinearRGBImage, localToneMapping->getMask(), clsFastRGBImage.get(), demosaicParameters);
+    convertTosRGB(_glsContext, *clFastLinearRGBImage, localToneMapping->getMask(), clsFastRGBImage.get(),
+                  demosaicParameters);
 
     cl::CommandQueue queue = cl::CommandQueue::getDefault();
     queue.finish();
     auto t_end = std::chrono::high_resolution_clock::now();
-    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end-t_start).count();
+    double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();
 
-    LOG_INFO(TAG) << "OpenCL Pipeline Execution Time: " << (int) elapsed_time_ms << "ms for image of size: " << rawImage.width << " x " << rawImage.height << std::endl;
+    LOG_INFO(TAG) << "OpenCL Pipeline Execution Time: " << (int)elapsed_time_ms
+                  << "ms for image of size: " << rawImage.width << " x " << rawImage.height << std::endl;
 
     return clsFastRGBImage.get();
 }
 
 template <typename T>
-/*static*/ typename gls::image<T>::unique_ptr RawConverter::convertToRGBImage(const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage) {
+/*static*/ typename gls::image<T>::unique_ptr RawConverter::convertToRGBImage(
+    const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage) {
     const constexpr auto scale = std::numeric_limits<typename T::value_type>::max();
 
     auto rgbImage = std::make_unique<gls::image<T>>(clRGBAImage.width, clRGBAImage.height);
@@ -359,19 +359,16 @@ template <typename T>
     for (int y = 0; y < clRGBAImage.height; y++) {
         for (int x = 0; x < clRGBAImage.width; x++) {
             const auto& p = rgbaImage[y][x];
-            (*rgbImage)[y][x] = {
-                (typename T::value_type) (scale * p.red),
-                (typename T::value_type) (scale * p.green),
-                (typename T::value_type) (scale * p.blue)
-            };
+            (*rgbImage)[y][x] = {(typename T::value_type)(scale * p.red), (typename T::value_type)(scale * p.green),
+                                 (typename T::value_type)(scale * p.blue)};
         }
     }
     clRGBAImage.unmapImage(rgbaImage);
     return rgbImage;
 }
 
-template
-gls::image<gls::rgb_pixel>::unique_ptr RawConverter::convertToRGBImage(const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage);
+template gls::image<gls::rgb_pixel>::unique_ptr RawConverter::convertToRGBImage(
+    const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage);
 
-template
-gls::image<gls::rgb_pixel_16>::unique_ptr RawConverter::convertToRGBImage<gls::rgb_pixel_16>(const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage);
+template gls::image<gls::rgb_pixel_16>::unique_ptr RawConverter::convertToRGBImage<gls::rgb_pixel_16>(
+    const gls::cl_image_2d<gls::rgba_pixel_float>& clRGBAImage);

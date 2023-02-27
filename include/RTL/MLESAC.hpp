@@ -104,7 +104,8 @@ class MLESAC : virtual public RANSAC<Model, Datum, Data> {
         if (sumLogLikelihood < minSumLogLikelihood) {
             minSumLogLikelihood = sumLogLikelihood;
 
-            const float beta = RANSAC<Model, Datum, Data>::paramThreshold; // Error tolerance - the threshold is probably a good quantifier
+            const float beta = RANSAC<Model, Datum, Data>::paramThreshold;  // Error tolerance - the threshold is
+                                                                            // probably a good quantifier
             const float k = std::erf(beta / (M_SQRT2 * dataSigma));
             const float denom = std::log(1.0 - std::pow(k, 4) * std::pow(gamma, 4));
             if (std::abs(denom) > FLT_EPSILON) {
@@ -119,9 +120,7 @@ class MLESAC : virtual public RANSAC<Model, Datum, Data> {
         return sumLogLikelihood;
     }
 
-    bool IsContinued(int iteration) override {
-        return RANSAC<Model, Datum, Data>::IsContinued(iteration);
-    }
+    bool IsContinued(int iteration) override { return RANSAC<Model, Datum, Data>::IsContinued(iteration); }
 
     int paramIterationEM;
 
