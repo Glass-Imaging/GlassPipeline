@@ -13,24 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <filesystem>
-#include <string>
-#include <cmath>
-#include <chrono>
-
-#include "gls_logging.h"
-#include "gls_image.hpp"
-
-#include "raw_converter.hpp"
-
-#include "demosaic.hpp"
-#include "gls_tiff_metadata.hpp"
-
-#include "gls_linalg.hpp"
-
-#include "CameraCalibration.hpp"
-
-static const char* TAG = "RawPipeline Test";
+#include "imagingPipeline.hpp"
 
 void copyMetadata(const gls::tiff_metadata& source, gls::tiff_metadata* destination, ttag_t tag) {
     const auto entry = source.find(tag);
