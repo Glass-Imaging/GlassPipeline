@@ -257,8 +257,6 @@ gls::image<gls::rgb_pixel_16>::unique_ptr demosaic_raw_data(
     RawConverter* rawConverter, const gls::image<gls::luma_pixel_16>& raw_data, int ISO,
     std::vector<float> color_matrix, std::vector<float> as_shot_neutral,
     std::vector<uint8_t> cfapattern, int blacklevel, int whitelevel) {
-    // std::vector<float> color_matrix = {1.2594, -0.5333, -0.1138, -0.1404, 0.9717, 0.1688, 0.0342,
-    // 0.0969, 0.4330}; std::vector<float> as_shot_neutral = {1 / 1.8930, 1.0000, 1 / 1.7007};
 
     gls::tiff_metadata dng_metadata, exif_metadata;
 
