@@ -253,6 +253,33 @@ void demosaicDirectory(RawConverter* rawConverter, std::filesystem::path input_p
     }
 }
 
+gls::image<gls::rgb_pixel_16>::unique_ptr demosaic_raw_data(
+    RawConverter* rawConverter, const gls::image<gls::luma_pixel_16>& raw_data, int ISO,
+    std::vector<float> color_matrix, std::vector<float> as_shot_neutral,
+    std::vector<uint8_t> cfapattern, int blacklevel, int whitelevel) {
+    // std::vector<float> color_matrix = {1.2594, -0.5333, -0.1138, -0.1404, 0.9717, 0.1688, 0.0342,
+    // 0.0969, 0.4330}; std::vector<float> as_shot_neutral = {1 / 1.8930, 1.0000, 1 / 1.7007};
+
+    gls::tiff_metadata dng_metadata, exif_metadata;
+
+    // Basic DNG image interpretation metadata
+    dng_metadata.insert({TIFFTAG_COLORMATRIX1, color_matrix});
+    dng_metadata.insert({TIFFTAG_ASSHOTNEUTRAL, as_shot_neutral});
+
+    dng_metadata.insert({TIFFTAG_CFAREPEATPATTERNDIM, std::vector<uint16_t>{2, 2}});
+    dng_metadata.insert({TIFFTAG_CFAPATTERN, cfapattern});
+    // TODO: Is this right how the black and white level are cast?
+    dng_metadata.insert({TIFFTAG_BLACKLEVEL, std::vector<float>{(float)blacklevel}});
+    dng_metadata.insert({TIFFTAG_WHITELEVEL, std::vector<uint32_t>{(uint32_t)whitelevel}});
+
+    // Basic EXIF metadata
+    // const auto ISO = 100; // Provide the actual ISO informations
+    exif_metadata.insert({EXIFTAG_ISOSPEEDRATINGS, std::vector<uint16_t>{(uint16_t)ISO}});
+
+    return demosaicSonya6400RawImage<gls::rgb_pixel_16>(rawConverter, &dng_metadata, &exif_metadata,
+                                                        raw_data);
+}
+
 int main(int argc, const char* argv[]) {
     printf("RawPipeline Test!\n");
 
