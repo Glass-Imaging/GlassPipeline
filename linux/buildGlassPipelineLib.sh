@@ -1,11 +1,11 @@
 # /bin/sh
 
 # start fresh
-rm -fr build
+# rm -fr build
 
 # build glsImage
 cd ../GlassImage/linux
-rm -fr build
+# rm -fr build
 ./buildGlassImageLib.sh
 cd -
 
