@@ -105,7 +105,7 @@ class RawConverter {
     void allocateHighNoiseTextures(gls::OpenCLContext* glsContext, int width, int height);
     void allocateFastDemosaicTextures(gls::OpenCLContext* glsContext, int width, int height);
 
-    const std::filesystem::path& _assets_root = "Assets/";
+    const std::filesystem::path _assets_root;
 
    public:
     RawConverter(gls::OpenCLContext* glsContext, const std::filesystem::path& assets_root = "Assets/")

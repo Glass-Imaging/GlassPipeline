@@ -15,6 +15,8 @@
 
 #include "imagingPipeline.hpp"
 
+static const char* TAG = "RawPipeline Test";
+
 void copyMetadata(const gls::tiff_metadata& source, gls::tiff_metadata* destination, ttag_t tag) {
     const auto entry = source.find(tag);
     if (entry != source.end()) {

@@ -33,8 +33,6 @@
 
 #include "CameraCalibration.hpp"
 
-static const char* TAG = "RawPipeline Test";
-
 void copyMetadata(const gls::tiff_metadata& source, gls::tiff_metadata* destination, ttag_t tag);
 
 void saveStrippedDNG(const std::string& file_name, const gls::image<gls::luma_pixel_16>& inputImage, const gls::tiff_metadata& dng_metadata, const gls::tiff_metadata& exif_metadata);
