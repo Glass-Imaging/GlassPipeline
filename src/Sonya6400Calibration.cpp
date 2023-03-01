@@ -86,7 +86,7 @@ public:
                 .luma = lmult[0] * lerp,
                 .chroma = cmult[0] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = 8 * gradientBoost,
+                .gradientBoost = 4 * gradientBoost,
                 .gradientThreshold = gradientThreshold,
                 .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)
             },
@@ -94,28 +94,28 @@ public:
                 .luma = lmult[1] * lerp,
                 .chroma = cmult[1] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = gradientBoost,
+//                .gradientBoost = gradientBoost,
                 .sharpening = 1.1
             },
             {
                 .luma = lmult[2] * lerp,
                 .chroma = cmult[2] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = gradientBoost,
+//                .gradientBoost = gradientBoost,
                 .sharpening = 1
             },
             {
                 .luma = lmult[3] * lerp,
                 .chroma = cmult[3] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = gradientBoost,
+//                .gradientBoost = gradientBoost,
                 .sharpening = 1
             },
             {
                 .luma = lmult[4] * lerp,
                 .chroma = cmult[4] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = gradientBoost,
+//                .gradientBoost = gradientBoost,
                 .sharpening = 1
             }
         }};
@@ -197,7 +197,7 @@ typename gls::image<T>::unique_ptr demosaicSonya6400RawImage(RawConverter* rawCo
     unpackDNGMetadata(inputImage, dng_metadata, demosaicParameters.get(), /*auto_white_balance=*/false, nullptr, false);
 
     const auto demosaicedImage =
-        rawConverter->runPipeline(inputImage, demosaicParameters.get(), /*calibrateFromImage=*/false);
+        rawConverter->runPipeline(inputImage, demosaicParameters.get(), /*calibrateFromImage=*/ true);
 
     //    gls::cl_image_2d<gls::rgba_pixel_float> unsquishedImage(rawConverter->getContext()->clContext(),
     //    demosaicedImage->width, demosaicedImage->height * 1.2); clRescaleImage(rawConverter->getContext(),

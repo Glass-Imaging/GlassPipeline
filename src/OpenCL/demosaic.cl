@@ -15,6 +15,25 @@
 
 #ifdef cl_khr_fp16
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
+#ifdef __APPLE__
+inline half2 __attribute__((overloadable)) myconvert_half2(float2 val) {
+    return (half2) (val.x, val.y);
+}
+
+inline half3 __attribute__((overloadable)) myconvert_half3(float3 val) {
+    return (half3) (val.x, val.y, val.z);
+}
+
+inline half4 __attribute__((overloadable)) myconvert_half4(float4 val) {
+    return (half4) (val.x, val.y, val.z, val.w);
+}
+
+#define convert_half2(val)    myconvert_half2(val)
+#define convert_half3(val)    myconvert_half3(val)
+#define convert_half4(val)    myconvert_half4(val)
+#endif
+
 #else
 #define half float
 #define half2 float2
@@ -22,6 +41,7 @@
 #define half4 float4
 #define read_imageh read_imagef
 #define write_imageh write_imagef
+#undef HALF_MAX
 #define HALF_MAX MAXFLOAT
 #define convert_half2(val)    (val)
 #define convert_half3(val)    (val)
@@ -82,24 +102,6 @@ constant const int2 bayerOffsets[4][4] = {
 
 #define abs(a) ({__typeof__(a) _a = (a); \
     _a > 0 ? _a : -_a;})
-
-#ifdef __APPLE__
-inline half2 __attribute__((overloadable)) myconvert_half2(float2 val) {
-    return (half2) (val.x, val.y);
-}
-
-inline half3 __attribute__((overloadable)) myconvert_half3(float3 val) {
-    return (half3) (val.x, val.y, val.z);
-}
-
-inline half4 __attribute__((overloadable)) myconvert_half4(float4 val) {
-    return (half4) (val.x, val.y, val.z, val.w);
-}
-
-#define convert_half2(val)    myconvert_half2(val)
-#define convert_half3(val)    myconvert_half3(val)
-#define convert_half4(val)    myconvert_half4(val)
-#endif
 
 // Fast 5x5 box filtering with linear subsampling
 typedef struct ConvolutionParameters {
@@ -1123,7 +1125,9 @@ kernel void denoiseImage(read_only image2d_t inputImage,
     half magnitude = length(gradient);
     half edge = smoothstep(4, 16, gradientThreshold * magnitude / sigma.x);
 
-    const int size = gradientBoost > 0 ? 4 : 2;
+    const int size = 8; // gradientBoost > 0 ? 8 : 4;
+
+    const half flatness_boost = gradientBoost > 0 ? 0.5 : 0;
 
     half3 filtered_pixel = 0;
     half3 kernel_norm = 0;
@@ -1135,11 +1139,11 @@ kernel void denoiseImage(read_only image2d_t inputImage,
             half3 inputDiff = (inputSampleYCC - inputYCC) * diffMultiplier;
             half2 gradientDiff = (gradientSample - gradient) / sigma.x;
 
-            half directionWeight = mix(1, tunnel(x, y, angle, (half) 0.25), edge);
+            half directionWeight = tunnel(x, y, angle, mix(100, 1, edge));
             half gradientWeight = 1 - smoothstep(2, 8, length(gradientDiff));
 
-            half lumaWeight = 1 - step(1 + (half) gradientBoost * edge, abs(inputDiff.x));
-            half chromaWeight = 1 - step((half) chromaBoost, length(inputDiff));
+            half lumaWeight = 1 - step(1 + (half) gradientBoost * edge, mix(1 - flatness_boost, 1, edge) * abs(inputDiff.x));
+            half chromaWeight = (abs(x) <= 4 && abs(y) <= 4) ? 1 - step((half) chromaBoost, length(inputDiff)) : 0;
 
             half3 sampleWeight = (half3) (directionWeight * gradientWeight * lumaWeight, chromaWeight, chromaWeight);
 
