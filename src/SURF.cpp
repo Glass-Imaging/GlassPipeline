@@ -1224,6 +1224,8 @@ static inline float L2Norm(const float* p1, const float* p2, int n) {
 
 #ifdef __APPLE__
 typedef std::chrono::steady_clock::time_point time_point;
+#elif __linux__
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> time_point;
 #else
 typedef std::chrono::system_clock::time_point time_point;
 #endif

@@ -16,6 +16,8 @@
 #ifndef raw_converter_hpp
 #define raw_converter_hpp
 
+#include <filesystem>
+
 #include "gls_cl_image.hpp"
 #include "pyramid_processor.hpp"
 
@@ -103,8 +105,11 @@ class RawConverter {
     void allocateHighNoiseTextures(gls::OpenCLContext* glsContext, int width, int height);
     void allocateFastDemosaicTextures(gls::OpenCLContext* glsContext, int width, int height);
 
+    const std::filesystem::path _assets_root;
+
    public:
-    RawConverter(gls::OpenCLContext* glsContext) : _glsContext(glsContext) {
+    RawConverter(gls::OpenCLContext* glsContext, const std::filesystem::path& assets_root = "Assets/")
+        : _glsContext(glsContext), _assets_root(assets_root) {
         localToneMapping = std::make_unique<LocalToneMapping>(_glsContext);
     }
 

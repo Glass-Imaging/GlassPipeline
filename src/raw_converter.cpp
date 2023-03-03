@@ -13,12 +13,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "raw_converter.hpp"
+
 #include <iomanip>
 #include <limits>
 
 #include "demosaic.hpp"
 #include "gls_logging.h"
-#include "raw_converter.hpp"
 
 static const char* TAG = "DEMOSAIC";
 
@@ -39,7 +40,7 @@ void RawConverter::allocateTextures(gls::OpenCLContext* glsContext, int width, i
 
         pyramidProcessor = std::make_unique<PyramidProcessor<5>>(glsContext, width, height);
 
-        const auto blueNoise = gls::image<gls::luma_pixel_16>::read_png_file("Assets/HDR_L_0b.png");
+        const auto blueNoise = gls::image<gls::luma_pixel_16>::read_png_file(_assets_root / "HDR_L_0b.png");
         clBlueNoise = std::make_unique<gls::cl_image_2d<gls::luma_pixel_16>>(_glsContext->clContext(), *blueNoise);
     }
 }
