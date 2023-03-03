@@ -47,9 +47,4 @@ void demosaicFile(RawConverter* rawConverter, std::filesystem::path input_path);
 
 void demosaicDirectory(RawConverter* rawConverter, std::filesystem::path input_path);
 
-gls::image<gls::rgb_pixel_16>::unique_ptr demosaic_raw_data(
-    RawConverter* rawConverter, const gls::image<gls::luma_pixel_16>& raw_data, int ISO,
-    std::vector<float> color_matrix, std::vector<float> as_shot_neutral,
-    std::vector<uint8_t> cfapattern, int blacklevel, int whitelevel);
-
 #endif /* imagingPipeline_hpp */
