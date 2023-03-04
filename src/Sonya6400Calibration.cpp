@@ -86,7 +86,7 @@ public:
                 .luma = lmult[0] * lerp,
                 .chroma = cmult[0] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = 4 * gradientBoost,
+                .gradientBoost = gradientBoost,
                 .gradientThreshold = gradientThreshold,
                 .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)
             },

@@ -196,9 +196,8 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
                            clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 
-    //    malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
-    //    demosaicParameters->bayerPattern,
-    //           rawVariance[0], rawVariance[1], rawVariance[2]);
+//    malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
+//           demosaicParameters->bayerPattern, rawVariance[0], rawVariance[1], rawVariance[2]);
 
     interpolateGreen(_glsContext, *clScaledRawImage, *clRawGradientImage, clGreenImage.get(),
                      demosaicParameters->bayerPattern, rawVariance[1]);

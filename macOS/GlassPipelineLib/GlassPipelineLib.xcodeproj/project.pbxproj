@@ -39,6 +39,8 @@
 		E5C5BE02299C45CA00AAB593 /* OpenCL in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE01299C45CA00AAB593 /* OpenCL */; };
 		E5C5BE04299C45DC00AAB593 /* Assets in CopyFiles */ = {isa = PBXBuildFile; fileRef = E5C5BE03299C45DC00AAB593 /* Assets */; };
 		E5C5BE7029A83CDF00AAB593 /* CameraCalibration.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BE6F29A83CDF00AAB593 /* CameraCalibration.cpp */; };
+		E5C5BF0E29B0258B00AAB593 /* PCA.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BF0C29B0258B00AAB593 /* PCA.cpp */; };
+		E5C5BF0F29B0258B00AAB593 /* PCA.hpp in Headers */ = {isa = PBXBuildFile; fileRef = E5C5BF0D29B0258B00AAB593 /* PCA.hpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -118,6 +120,8 @@
 		E5C5BE03299C45DC00AAB593 /* Assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Assets; path = ../../Assets; sourceTree = "<group>"; };
 		E5C5BE05299C4B7F00AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = ../../GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<group>"; };
 		E5C5BE6F29A83CDF00AAB593 /* CameraCalibration.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = CameraCalibration.cpp; path = ../../src/CameraCalibration.cpp; sourceTree = "<group>"; };
+		E5C5BF0C29B0258B00AAB593 /* PCA.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PCA.cpp; path = ../../src/PCA.cpp; sourceTree = "<group>"; };
+		E5C5BF0D29B0258B00AAB593 /* PCA.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; name = PCA.hpp; path = ../../src/PCA.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -142,6 +146,8 @@
 				E5C5BDAA299C3DC900AAB593 /* demosaic_cl.cpp */,
 				E5C5BDB4299C3DC900AAB593 /* demosaic_cpu.cpp */,
 				E5C5BDAE299C3DC900AAB593 /* demosaic.cpp */,
+				E5C5BF0C29B0258B00AAB593 /* PCA.cpp */,
+				E5C5BF0D29B0258B00AAB593 /* PCA.hpp */,
 				E5C5BDD2299C405800AAB593 /* demosaic_utils.cpp */,
 				E5C5BDA8299C3DC900AAB593 /* homography.cpp */,
 				E5C5BDAB299C3DC900AAB593 /* IMX571Calibration.cpp */,
@@ -233,6 +239,7 @@
 				E5C5BDA3299C3DB700AAB593 /* demosaic_cl.hpp in Headers */,
 				E5C5BDA4299C3DB700AAB593 /* RANSAC.hpp in Headers */,
 				E5C5BDA5299C3DB700AAB593 /* SVD.hpp in Headers */,
+				E5C5BF0F29B0258B00AAB593 /* PCA.hpp in Headers */,
 				E5C5BDA6299C3DB700AAB593 /* ThreadPool.hpp in Headers */,
 				E5C5BDA7299C3DB700AAB593 /* raw_converter.hpp in Headers */,
 			);
@@ -330,6 +337,7 @@
 				E5C5BDBA299C3DC900AAB593 /* IMX571Calibration.cpp in Sources */,
 				E5C5BDBB299C3DC900AAB593 /* iPhone11Calibration.cpp in Sources */,
 				E5C5BDBC299C3DC900AAB593 /* RicohGRIIICalibration.cpp in Sources */,
+				E5C5BF0E29B0258B00AAB593 /* PCA.cpp in Sources */,
 				E5C5BDBD299C3DC900AAB593 /* demosaic.cpp in Sources */,
 				E5C5BDBE299C3DC900AAB593 /* SURF.cpp in Sources */,
 				E5C5BDD3299C405800AAB593 /* demosaic_utils.cpp in Sources */,
@@ -494,6 +502,7 @@
 					"\"$(SRCROOT)/../../include\"",
 					/usr/local/include,
 					/opt/homebrew/include,
+					/opt/homebrew/include/eigen3,
 				);
 			};
 			name = Debug;
@@ -525,6 +534,7 @@
 					"\"$(SRCROOT)/../../include\"",
 					/usr/local/include,
 					/opt/homebrew/include,
+					/opt/homebrew/include/eigen3,
 				);
 			};
 			name = Release;

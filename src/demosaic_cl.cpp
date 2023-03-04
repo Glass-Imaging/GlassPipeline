@@ -449,6 +449,38 @@ void denoiseImage(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rg
            gradientThreshold, outputImage->getImage2D());
 }
 
+void denoiseImagePatch(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                       const gls::cl_image_2d<gls::luma_alpha_pixel_float>& gradientImage,
+                       const gls::cl_image_2d<gls::pixel<uint32_t, 4>>& pcaImage,
+                       const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
+                       const gls::Vector<3> thresholdMultipliers, float chromaBoost, float gradientBoost,
+                       float gradientThreshold, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+    // Load the shader source
+    const auto program = glsContext->loadProgram("demosaic");
+
+    // Bind the kernel parameters
+    auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
+                                    cl::Image2D,  // gradientImage
+                                    cl::Image2D,  // pcaImage
+                                    cl_float3,    // var_a
+                                    cl_float3,    // var_b
+                                    cl_float3,    // thresholdMultipliers
+                                    float,        // chromaBoost
+                                    float,        // gradientBoost
+                                    float,        // gradientThreshold
+                                    cl::Image2D   // outputImage
+                                    >(program, "denoiseImagePatch");
+
+    cl_float3 cl_var_a = {var_a[0], var_a[1], var_a[2]};
+    cl_float3 cl_var_b = {var_b[0], var_b[1], var_b[2]};
+
+    // Schedule the kernel on the GPU
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height), inputImage.getImage2D(),
+           gradientImage.getImage2D(), pcaImage.getImage2D(), cl_var_a, cl_var_b,
+           {thresholdMultipliers[0], thresholdMultipliers[1], thresholdMultipliers[2]}, chromaBoost, gradientBoost,
+           gradientThreshold, outputImage->getImage2D());
+}
+
 void denoiseImageGuided(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                         const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {

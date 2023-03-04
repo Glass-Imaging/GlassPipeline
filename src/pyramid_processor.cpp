@@ -18,6 +18,8 @@
 #include "gls_logging.h"
 #include "pyramid_processor.hpp"
 
+#include "PCA.hpp"
+
 static const char* TAG = "DEMOSAIC";
 
 template <size_t levels>
@@ -91,12 +93,16 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
         thresholdMultipliers[i] = nflMultiplier((*denoiseParameters)[i]);
     }
 
+    std::array<float, levels> lumaMultiplier = { 4, 2, 1, 0.5, 0.25 };
+
+    int maxLevels = 5;
+
     // Denoise pyramid layers from the bottom to the top, subtracting the noise of the previous layer from the next
-    for (int i = levels - 1; i >= 0; i--) {
+    for (int i = maxLevels - 1; i >= 0; i--) {
         const auto denoiseInput = i > 0 ? imagePyramid[i - 1].get() : &image;
         const auto gradientInput = i > 0 ? gradientPyramid[i - 1].get() : &gradientImage;
 
-        if (i < levels - 1) {
+        if (i < maxLevels - 1) {
             // Subtract the previous layer's noise from the current one
             // LOG_INFO(TAG) << "Reassembling layer " << i + 1 << " with sharpening: " <<
             // (*denoiseParameters)[i].sharpening << std::endl;
@@ -111,11 +117,38 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
         // LOG_INFO(TAG) << "Denoising image level " << i << " with multipliers " << thresholdMultipliers[i] <<
         // std::endl;
 
-        // Denoise current layer
-        denoiseImage(glsContext, i < levels - 1 ? *(subtractedImagePyramid[i]) : *denoiseInput, *gradientInput,
-                     (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],
-                     (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
-                     (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
+        const auto layerImage = i < maxLevels - 1 ? subtractedImagePyramid[i].get() : denoiseInput;
+
+        const bool usePatchSimiliarity = true;
+        if (usePatchSimiliarity) {
+            const auto imageCPU = layerImage->mapImage();
+
+            gls::cl_image_2d<gls::pixel<uint32_t, 4>> pcaImage(glsContext->clContext(), layerImage->width, layerImage->height);
+            auto pcaImageCPU = pcaImage.mapImage();
+            auto pca_memory = (std::array<gls::float16_t, 8> *) pcaImageCPU.pixels().data();
+            auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, imageCPU.width * imageCPU.height);
+
+            gls::image<std::array<gls::float16_t, 8>> pca_image(pcaImageCPU.width, pcaImageCPU.height, pcaImageCPU.stride, pca_span);
+            pca(imageCPU, i > 0 ? 5 : 3, &pca_image);
+
+            pcaImage.unmapImage(pcaImageCPU);
+            layerImage->unmapImage(imageCPU);
+
+            gls::Vector<3> tm = thresholdMultipliers[i];
+
+            tm[0] = lumaMultiplier[i];
+
+            // Denoise current layer
+            denoiseImagePatch(glsContext, *layerImage, *gradientInput, pcaImage,
+                              (*nlfParameters)[i].first, (*nlfParameters)[i].second, tm,
+                              (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
+                              (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
+        } else {
+            denoiseImage(glsContext, *layerImage, *gradientInput,
+                         (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],
+                         (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
+                         (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
+        }
     }
 
     return denoisedImagePyramid[0].get();

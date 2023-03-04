@@ -364,23 +364,44 @@
 		E5C5BDE5299C419200AAB593 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_USE_OPTIMIZATION_PROFILE = NO;
 				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4A4DGXV9V7;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_FAST_MATH = NO;
+				LLVM_LTO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include,
+					/usr/local/include,
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+				);
 			};
 			name = Debug;
 		};
 		E5C5BDE6299C419200AAB593 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_USE_OPTIMIZATION_PROFILE = NO;
 				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4A4DGXV9V7;
 				ENABLE_HARDENED_RUNTIME = YES;
+				GCC_FAST_MATH = NO;
+				GCC_OPTIMIZATION_LEVEL = s;
+				LLVM_LTO = NO;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include,
+					/usr/local/include,
+					"\"$(SRCROOT)/../../GlassImage/include\"",
+					"\"$(SRCROOT)/../../include\"",
+					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
+				);
 			};
 			name = Release;
 		};

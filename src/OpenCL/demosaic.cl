@@ -284,8 +284,8 @@ kernel void interpolateGreen(read_only image2d_t rawImage,
         }
 
         // TODO: Doesn't seem like a good idea, maybe for high noise images?
-        // If the gradient is below threshold interpolate against the grain
-        // direction = mix(1 - direction, direction, gradient_threshold);
+        // If the gradient is below threshold go flat
+        direction = mix(0.5, direction, gradient_threshold);
 
         // Estimate the degree of correlation between channels to drive the amount of HF extraction
         const float cmin = min(c_xy, min(g_ave, c2_ave));
@@ -555,7 +555,7 @@ kernel void malvar(read_only image2d_t rawImage, read_only image2d_t gradientIma
             // Minimum gradient threshold wrt the noise model
             float gradient_threshold = smoothstep(rawStdDev, 4 * rawStdDev, length(gradient));
 
-            // If the gradient is below threshold interpolate against the grain
+            // If the gradient is below threshold go flat
             float alpha = mix(0.5, direction, gradient_threshold);
 
             float2 g_lf = { 2 * (g_left + g_right), 2 * (g_up + g_down) };
@@ -910,15 +910,15 @@ half4 despeckle_3x3x4_strong(image2d_t inputImage, float4 rawVariance, int2 imag
     }
 
     half4 sigma = sqrt(convert_half4(rawVariance) * sample);
-    half4 minVal = mix(thirdMin, firstMin, smoothstep(2 * sigma, 8 * sigma, thirdMin - firstMin));
+    // half4 minVal = mix(thirdMin, firstMin, smoothstep(2 * sigma, 8 * sigma, thirdMin - firstMin));
     half4 maxVal = mix(thirdMax, firstMax, smoothstep(sigma, 4 * sigma, firstMax - thirdMax));
-    return clamp(sample, minVal, maxVal);
+    return clamp(sample, thirdMin, maxVal);
 }
 
 kernel void despeckleRawRGBAImage(read_only image2d_t inputImage, float4 rawVariance, write_only image2d_t denoisedImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
 
-    half4 despeckledPixel = despeckle_3x3x4(inputImage, rawVariance, imageCoordinates);
+    half4 despeckledPixel = despeckle_3x3x4_strong(inputImage, rawVariance, imageCoordinates);
 
     write_imageh(denoisedImage, imageCoordinates, despeckledPixel);
 }
@@ -1154,6 +1154,61 @@ kernel void denoiseImage(read_only image2d_t inputImage,
     half3 denoisedPixel = filtered_pixel / kernel_norm;
 
     write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, magnitude));
+}
+
+half __attribute__((overloadable)) eigen_match(half8 v, half detail) {
+    half d1 = dot(v.lo, v.lo);
+    half d2 = dot(v.hi, v.hi);
+
+    half high_detail = smoothstep(0.95h, 1, detail);
+
+    return sqrt(d1 + mix(0, d2, high_detail));
+}
+
+kernel void denoiseImagePatch(read_only image2d_t inputImage,
+                              read_only image2d_t gradientImage,
+                              read_only image2d_t pcaImage,
+                              float3 var_a, float3 var_b, float3 thresholdMultipliers,
+                              float chromaBoost, float gradientBoost, float gradientThreshold,
+                              write_only image2d_t denoisedImage) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+
+    const half3 inputYCC = read_imageh(inputImage, imageCoordinates).xyz;
+    const half8 inputPCA = (half8) read_imageui(pcaImage, imageCoordinates);
+
+    var_a.x = mix(var_b.x / 4, var_a.x, (float) smoothstep(0, 0.05h, inputPCA.x));
+    half3 sigma = convert_half3(sqrt(var_a + var_b * inputYCC.x));
+    half3 diffMultiplier = 1 / (convert_half3(thresholdMultipliers) * sigma);
+
+    half2 gradient = read_imageh(gradientImage, imageCoordinates).xy;
+    half magnitude = length(gradient);
+    half edge = smoothstep(4, 16, gradientThreshold * magnitude / sigma.x);
+    half detail = smoothstep(1, 4, gradientThreshold * magnitude / sigma.x);
+
+    const int size = 16;
+
+    half3 filtered_pixel = 0;
+    half3 kernel_norm = 0;
+    for (int y = -size; y <= size; y++) {
+        for (int x = -size; x <= size; x++) {
+            half3 inputSampleYCC = read_imageh(inputImage, imageCoordinates + (int2)(x, y)).xyz;
+            half8 samplePCA = (half8) read_imageui(pcaImage, imageCoordinates + (int2)(x, y));
+
+            half pcaDiff = eigen_match(samplePCA - inputPCA, detail);
+            half lumaWeight = 1 - step(1 + (half) gradientBoost * edge, pcaDiff * diffMultiplier.x);
+
+            half3 inputDiff = (inputSampleYCC - inputYCC) * diffMultiplier;
+            half chromaWeight = (abs(x) <= 4 && abs(y) <= 4) ? 1 - step((half) chromaBoost, length(inputDiff)) : 0;
+
+            half3 sampleWeight = (half3) (lumaWeight, chromaWeight, chromaWeight);
+
+            filtered_pixel += sampleWeight * inputSampleYCC;
+            kernel_norm += sampleWeight;
+        }
+    }
+    half3 denoisedPixel = filtered_pixel / kernel_norm;
+
+    write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, 0));
 }
 
 typedef struct transform {
