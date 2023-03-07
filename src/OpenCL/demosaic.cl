@@ -214,8 +214,7 @@ kernel void rawImageGradient(read_only image2d_t inputImage, write_only image2d_
 
 kernel void rawImageSobel(read_only image2d_t inputImage, write_only image2d_t gradientImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
-    // TODO: Adjust this properly
-    float2 gradient = 4.5h * sobel(inputImage, imageCoordinates.x, imageCoordinates.y);
+    float2 gradient = sobel(inputImage, imageCoordinates.x, imageCoordinates.y);
 
     write_imagef(gradientImage, imageCoordinates, (float4) (gradient, abs(gradient)));
 }
@@ -1166,9 +1165,7 @@ kernel void denoiseImage(read_only image2d_t inputImage,
 
 half __attribute__((overloadable)) length(half8 v) {
     half d1 = dot(v.lo, v.lo);
-    // TODO: veryfy that 6 eigenvector components is enough
-    // half d2 = dot(v.hi, v.hi);
-    half d2 = dot(v.hi.lo, v.hi.lo);
+    half d2 = dot(v.hi, v.hi);
     return sqrt(d1 + d2);
 }
 
@@ -1186,7 +1183,7 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
     half3 sigma = convert_half3(sqrt(var_a + var_b * inputYCC.x));
 
     // Low level signal sigma boost
-    half threshold = 0.1;
+    half threshold = 0.2;
     if (inputYCC.x <= threshold) {
         half3 sigma_001 = convert_half3(sqrt(var_a + var_b * threshold));
         sigma = sigma_001 * (0.6h + 0.4h * inputYCC.x / threshold);
@@ -1225,7 +1222,7 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
     }
     half3 denoisedPixel = filtered_pixel / kernel_norm;
 
-    write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, 0));
+    write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, kernel_norm.x));
 }
 
 typedef struct transform {
@@ -1428,7 +1425,7 @@ kernel void subtractNoiseImage(read_only image2d_t inputImage, read_only image2d
 
     // Sharpen all components
     denoisedPixel = mix(inputPixelDenoised1, denoisedPixel, sharpening);
-    denoisedPixel.x = max(denoisedPixel.x, 0.0);
+//    denoisedPixel.x = max(denoisedPixel.x, 0.0);
 
     write_imagef(outputImage, output_pos, (float4) (denoisedPixel, inputPixel.w));
 }
@@ -2139,7 +2136,7 @@ float3 sharpen(float3 pixel_value, float amount, float radius, image2d_t inputIm
 
     float3 blurred_pixel = gaussianBlur(radius, inputImage, imageCoordinates);
 
-    return mix(blurred_pixel, pixel_value, fmax(sharpening, 1.0));
+    return mix(blurred_pixel, pixel_value, max(sharpening, 1.0));
 }
 
 /// ---- Tone Curve ----

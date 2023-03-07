@@ -64,6 +64,18 @@ void dumpGradientImage(const gls::cl_image_2d<gls::luma_alpha_pixel_float>& imag
 
 #endif  // DEBUG_PYRAMID
 
+void savePatchMap(const gls::cl_image_2d<gls::rgba_pixel_float>& denoisedImage) {
+    gls::image<gls::luma_pixel_16> out(denoisedImage.width, denoisedImage.height);
+    const auto greenImageCPU = denoisedImage.mapImage();
+    out.apply([&greenImageCPU](gls::luma_pixel_16* p, int x, int y) {
+        const auto& ip = greenImageCPU[y][x];
+        *p = gls::luma_pixel_16{(uint16_t)(ip[3])};
+    });
+    denoisedImage.unmapImage(greenImageCPU);
+    static int count = 1;
+    out.write_png_file("/Users/fabio/patch_map" + std::to_string(count++) + ".png");
+}
+
 // TODO: Make this a tunable
 static const constexpr float lumaDenoiseWeight[4] = {1, 1, 1, 1};
 
@@ -127,7 +139,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
             auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, imageCPU.width * imageCPU.height);
 
             gls::image<std::array<gls::float16_t, 8>> pca_image(pcaImageCPU.width, pcaImageCPU.height, pcaImageCPU.stride, pca_span);
-            pca(imageCPU, 3, &pca_image);
+            pca(imageCPU, 5, &pca_image);
 
             pcaImage.unmapImage(pcaImageCPU);
             layerImage->unmapImage(imageCPU);
@@ -137,6 +149,8 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
                               (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],
                               (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
                               (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
+
+            savePatchMap(*(denoisedImagePyramid[i]));
         } else {
             denoiseImage(glsContext, *layerImage, *gradientInput,
                          (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],

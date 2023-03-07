@@ -59,9 +59,11 @@ void pca(const gls::image<gls::rgba_pixel_float>& input, int patch_size, gls::im
 
     std::cout << "PCA Execution Time: " << (int)elapsed_time_ms << std::endl;
 
+    int components = patch_size == 3 ? 6 : 8;
+
     // Select eight largest eigenvectors in decreasing order
-    egn::MatrixXf main_components(patch_size * patch_size, 8);
-    for (int i = 0; i < 8; i++) {
+    egn::MatrixXf main_components(patch_size * patch_size, components);
+    for (int i = 0; i < components; i++) {
         main_components.innerVector(i) = principal_components.innerVector(principal_components.cols()-1 - i);
     }
 
@@ -79,8 +81,11 @@ void pca(const gls::image<gls::rgba_pixel_float>& input, int patch_size, gls::im
     // Copy the projected features to the result
     pca_image->apply([&] (std::array<gls::float16_t, 8>* p, int x, int y) {
         const int patch_index = y * input.width + x;
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < components; i++) {
             (*p)[i] = projection(patch_index, i);
+        }
+        for (int i = components; i < 8; i++) {
+            (*p)[i] = 0;
         }
     });
 }
