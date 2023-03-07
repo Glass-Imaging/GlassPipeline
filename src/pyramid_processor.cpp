@@ -93,8 +93,6 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
         thresholdMultipliers[i] = nflMultiplier((*denoiseParameters)[i]);
     }
 
-    std::array<float, levels> lumaMultiplier = { 4, 2, 1, 0.5, 0.25 };
-
     int maxLevels = 5;
 
     // Denoise pyramid layers from the bottom to the top, subtracting the noise of the previous layer from the next
@@ -129,18 +127,14 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
             auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, imageCPU.width * imageCPU.height);
 
             gls::image<std::array<gls::float16_t, 8>> pca_image(pcaImageCPU.width, pcaImageCPU.height, pcaImageCPU.stride, pca_span);
-            pca(imageCPU, i > 0 ? 5 : 3, &pca_image);
+            pca(imageCPU, 3, &pca_image);
 
             pcaImage.unmapImage(pcaImageCPU);
             layerImage->unmapImage(imageCPU);
 
-            gls::Vector<3> tm = thresholdMultipliers[i];
-
-            tm[0] = lumaMultiplier[i];
-
             // Denoise current layer
             denoiseImagePatch(glsContext, *layerImage, *gradientInput, pcaImage,
-                              (*nlfParameters)[i].first, (*nlfParameters)[i].second, tm,
+                              (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],
                               (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
                               (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
         } else {

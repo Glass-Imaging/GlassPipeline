@@ -8,9 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		E5C5BDE1299C419200AAB593 /* ImagingPipeline.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5C5BDE0299C419200AAB593 /* ImagingPipeline.cpp */; };
-		E5C5BDFA299C44BA00AAB593 /* libGlassImageLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */; };
 		E5C5BDFB299C44BA00AAB593 /* libGlassPipelineLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDED299C43BE00AAB593 /* libGlassPipelineLib.dylib */; };
 		E5C5BDFD299C44C600AAB593 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BDFC299C44C600AAB593 /* OpenCL.framework */; };
+		E5C5BF1E29B69AAD00AAB593 /* libGlassImageLib.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = E5C5BF1D29B69AAD00AAB593 /* libGlassImageLib.dylib */; };
+		E5C5BF1F29B69AAD00AAB593 /* libGlassImageLib.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = E5C5BF1D29B69AAD00AAB593 /* libGlassImageLib.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -28,20 +29,6 @@
 			remoteGlobalIDString = E58337DC299C3637007192AD;
 			remoteInfo = GlassPipelineLib;
 		};
-		E5C5BDF3299C43D400AAB593 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = E583372E299C1899007192AD;
-			remoteInfo = GlassImageLib;
-		};
-		E5C5BDF6299C43D400AAB593 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = E583372F299C1899007192AD;
-			remoteInfo = GlassImageLib;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -54,15 +41,26 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
+		E5C5BF2029B69AAD00AAB593 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				E5C5BF1F29B69AAD00AAB593 /* libGlassImageLib.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		E5C5BDDD299C419200AAB593 /* ImagingPipeline */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = ImagingPipeline; sourceTree = BUILT_PRODUCTS_DIR; };
 		E5C5BDE0299C419200AAB593 /* ImagingPipeline.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ImagingPipeline.cpp; sourceTree = "<group>"; };
 		E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassPipelineLib.xcodeproj; path = ../GlassPipelineLib/GlassPipelineLib.xcodeproj; sourceTree = "<group>"; };
-		E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = GlassImageLib.xcodeproj; path = /Users/fabio/work/GlassPipeline/GlassImage/macOS/GlassImageLib/GlassImageLib.xcodeproj; sourceTree = "<absolute>"; };
 		E5C5BDF8299C43EA00AAB593 /* ImagingPipeline.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ImagingPipeline.entitlements; sourceTree = "<group>"; };
 		E5C5BDFC299C44C600AAB593 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
+		E5C5BF1D29B69AAD00AAB593 /* libGlassImageLib.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; path = libGlassImageLib.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,8 +68,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E5C5BF1E29B69AAD00AAB593 /* libGlassImageLib.dylib in Frameworks */,
 				E5C5BDFD299C44C600AAB593 /* OpenCL.framework in Frameworks */,
-				E5C5BDFA299C44BA00AAB593 /* libGlassImageLib.dylib in Frameworks */,
 				E5C5BDFB299C44BA00AAB593 /* libGlassPipelineLib.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -82,7 +80,6 @@
 		E5C5BDD4299C419200AAB593 = {
 			isa = PBXGroup;
 			children = (
-				E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */,
 				E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */,
 				E5C5BDDF299C419200AAB593 /* ImagingPipeline */,
 				E5C5BDDE299C419200AAB593 /* Products */,
@@ -115,17 +112,10 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		E5C5BDEF299C43D400AAB593 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 		E5C5BDF9299C44BA00AAB593 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				E5C5BF1D29B69AAD00AAB593 /* libGlassImageLib.dylib */,
 				E5C5BDFC299C44C600AAB593 /* OpenCL.framework */,
 			);
 			name = Frameworks;
@@ -141,12 +131,12 @@
 				E5C5BDD9299C419200AAB593 /* Sources */,
 				E5C5BDDA299C419200AAB593 /* Frameworks */,
 				E5C5BDDB299C419200AAB593 /* CopyFiles */,
+				E5C5BF2029B69AAD00AAB593 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				E5C5BDF2299C43D400AAB593 /* PBXTargetDependency */,
-				E5C5BDF4299C43D400AAB593 /* PBXTargetDependency */,
 			);
 			name = ImagingPipeline;
 			productName = ImagingPipeline;
@@ -180,10 +170,6 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = E5C5BDEF299C43D400AAB593 /* Products */;
-					ProjectRef = E5C5BDEE299C43D400AAB593 /* GlassImageLib.xcodeproj */;
-				},
-				{
 					ProductGroup = E5C5BDE8299C43BE00AAB593 /* Products */;
 					ProjectRef = E5C5BDE7299C43BE00AAB593 /* GlassPipelineLib.xcodeproj */;
 				},
@@ -201,13 +187,6 @@
 			fileType = "compiled.mach-o.dylib";
 			path = libGlassPipelineLib.dylib;
 			remoteRef = E5C5BDEC299C43BE00AAB593 /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		E5C5BDF7299C43D400AAB593 /* libGlassImageLib.dylib */ = {
-			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.dylib";
-			path = libGlassImageLib.dylib;
-			remoteRef = E5C5BDF6299C43D400AAB593 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -228,11 +207,6 @@
 			isa = PBXTargetDependency;
 			name = GlassPipelineLib;
 			targetProxy = E5C5BDF1299C43D400AAB593 /* PBXContainerItemProxy */;
-		};
-		E5C5BDF4299C43D400AAB593 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = GlassImageLib;
-			targetProxy = E5C5BDF3299C43D400AAB593 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -364,44 +338,23 @@
 		E5C5BDE5299C419200AAB593 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_USE_OPTIMIZATION_PROFILE = NO;
 				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4A4DGXV9V7;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_FAST_MATH = NO;
-				LLVM_LTO = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYSTEM_HEADER_SEARCH_PATHS = (
-					/opt/homebrew/include,
-					/usr/local/include,
-					"\"$(SRCROOT)/../../GlassImage/include\"",
-					"\"$(SRCROOT)/../../include\"",
-					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
-				);
 			};
 			name = Debug;
 		};
 		E5C5BDE6299C419200AAB593 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_USE_OPTIMIZATION_PROFILE = NO;
 				CODE_SIGN_ENTITLEMENTS = ImagingPipeline/ImagingPipeline.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 4A4DGXV9V7;
 				ENABLE_HARDENED_RUNTIME = YES;
-				GCC_FAST_MATH = NO;
-				GCC_OPTIMIZATION_LEVEL = s;
-				LLVM_LTO = NO;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYSTEM_HEADER_SEARCH_PATHS = (
-					/opt/homebrew/include,
-					/usr/local/include,
-					"\"$(SRCROOT)/../../GlassImage/include\"",
-					"\"$(SRCROOT)/../../include\"",
-					"\"$(SRCROOT)/../../GlassImage/OpenCLHeaders\"",
-				);
 			};
 			name = Release;
 		};

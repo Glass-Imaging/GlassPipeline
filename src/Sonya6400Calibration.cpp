@@ -70,10 +70,10 @@ public:
 
         LOG_INFO(TAG) << "Sonya6400 DenoiseParameters nlf_alpha: " << nlf_alpha << ", ISO: " << iso << std::endl;
 
-        float lerp = std::lerp(0.125f, 2.0f, nlf_alpha);
+        float lerp = 1; // std::lerp(0.125f, 2.0f, nlf_alpha);
         float lerp_c = 1;
 
-        float lmult[5] = { 0.5, 1, 0.5, 0.25, 0.125 };
+        float lmult[5] = { 2, 4, 2, 0.5, 0.25 };
         float cmult[5] = { 1, 0.5, 0.5, 0.5, 0.25 };
 
         float chromaBoost = 8;
@@ -86,7 +86,7 @@ public:
                 .luma = lmult[0] * lerp,
                 .chroma = cmult[0] * lerp_c,
                 .chromaBoost = chromaBoost,
-                .gradientBoost = gradientBoost,
+                .gradientBoost = 2 * gradientBoost,
                 .gradientThreshold = gradientThreshold,
                 .sharpening = std::lerp(1.5f, 1.0f, nlf_alpha)
             },

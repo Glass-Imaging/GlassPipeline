@@ -33,7 +33,8 @@ static const char* TAG = "DEMOSAIC";
  place.
  */
 
-void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
+template <typename pixel_type>
+void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<pixel_type>& rawImage,
                   gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage, BayerPattern bayerPattern,
                   gls::Vector<4> scaleMul, float blackLevel) {
     // Load the shader source
@@ -51,6 +52,34 @@ void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::lu
     kernel(gls::OpenCLContext::buildEnqueueArgs(scaledRawImage->width / 2, scaledRawImage->height / 2),
            rawImage.getImage2D(), scaledRawImage->getImage2D(), bayerPattern,
            {scaleMul[0], scaleMul[1], scaleMul[2], scaleMul[3]}, blackLevel);
+}
+
+template
+void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
+                  gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage, BayerPattern bayerPattern,
+                  gls::Vector<4> scaleMul, float blackLevel);
+
+template
+void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
+                  gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage, BayerPattern bayerPattern,
+                  gls::Vector<4> scaleMul, float blackLevel);
+
+void scaleRgbData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                  gls::cl_image_2d<gls::rgba_pixel_float>* scaledImage,
+                  gls::Vector<3> scaleMul, float blackLevel) {
+    // Load the shader source
+    const auto program = glsContext->loadProgram("demosaic");
+
+    // Bind the kernel parameters
+    auto kernel = cl::KernelFunctor<cl::Image2D,  // rawImage
+                                    cl::Image2D,  // scaledImage
+                                    cl_float3,    // scaleMul
+                                    float         // blackLevel
+                                    >(program, "scaleRgbData");
+
+    kernel(gls::OpenCLContext::buildEnqueueArgs(scaledImage->width, scaledImage->height),
+           inputImage.getImage2D(), scaledImage->getImage2D(),
+           {scaleMul[0], scaleMul[1], scaleMul[2]}, blackLevel);
 }
 
 void rawImageGradient(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,

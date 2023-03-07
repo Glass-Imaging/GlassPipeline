@@ -157,7 +157,7 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
     clRawImage->copyPixelsFrom(rawImage);
 
     scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern,
-                 demosaicParameters->scale_mul, demosaicParameters->black_level / 0xffff);
+                 {1, 1, 1, 1}, 0);
 
     rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
     // dumpGradientImage(*clRawSobelImage);
@@ -196,17 +196,23 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
                            clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 
-//    malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
-//           demosaicParameters->bayerPattern, rawVariance[0], rawVariance[1], rawVariance[2]);
+    if (high_noise_image) {
+        malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
+               demosaicParameters->bayerPattern, rawVariance[0], rawVariance[1], rawVariance[2]);
+    } else {
+        interpolateGreen(_glsContext, *clScaledRawImage, *clRawGradientImage, clGreenImage.get(),
+                         demosaicParameters->bayerPattern, rawVariance[1]);
 
-    interpolateGreen(_glsContext, *clScaledRawImage, *clRawGradientImage, clGreenImage.get(),
-                     demosaicParameters->bayerPattern, rawVariance[1]);
+        interpolateRedBlue(_glsContext, *clScaledRawImage, *clGreenImage, *clRawGradientImage, clLinearRGBImageA.get(),
+                           demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
 
-    interpolateRedBlue(_glsContext, *clScaledRawImage, *clGreenImage, *clRawGradientImage, clLinearRGBImageA.get(),
-                       demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
+        interpolateRedBlueAtGreen(_glsContext, *clLinearRGBImageA, *clRawGradientImage, clLinearRGBImageA.get(),
+                                  demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
+    }
 
-    interpolateRedBlueAtGreen(_glsContext, *clLinearRGBImageA, *clRawGradientImage, clLinearRGBImageA.get(),
-                              demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
+    scaleRgbData(_glsContext, *clLinearRGBImageA, clLinearRGBImageA.get(),
+                 { demosaicParameters->scale_mul[0], demosaicParameters->scale_mul[1], demosaicParameters->scale_mul[2] },
+                 demosaicParameters->black_level / 0xffff);
 
     // Recover clipped highlights
     blendHighlightsImage(_glsContext, *clLinearRGBImageA, /*clip=*/1.0, clLinearRGBImageA.get());

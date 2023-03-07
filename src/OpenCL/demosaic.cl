@@ -150,8 +150,15 @@ kernel void scaleRawData(read_only image2d_t rawImage, write_only image2d_t scal
     for (int c = 0; c < 4; c++) {
         int2 o = bayerOffsets[bayerPattern][c];
         write_imagef(scaledRawImage, imageCoordinates + (int2) (o.x, o.y),
-                     max(scaleMul[c] * (read_imagef(rawImage, imageCoordinates + (int2) (o.x, o.y)).x - blackLevel), 0.0f));
+                     scaleMul[c] * (read_imagef(rawImage, imageCoordinates + (int2) (o.x, o.y)).x - blackLevel));
     }
+}
+
+kernel void scaleRgbData(read_only image2d_t inputImage, write_only image2d_t scaledImage,
+                         float3 scaleMul, float blackLevel) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+    write_imagef(scaledImage, imageCoordinates,
+                 (float4) (scaleMul * (read_imagef(inputImage, imageCoordinates).xyz - blackLevel), 0.0f));
 }
 
 float2 sobel(read_only image2d_t inputImage, int x, int y) {
@@ -207,7 +214,8 @@ kernel void rawImageGradient(read_only image2d_t inputImage, write_only image2d_
 
 kernel void rawImageSobel(read_only image2d_t inputImage, write_only image2d_t gradientImage) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
-    float2 gradient = sobel(inputImage, imageCoordinates.x, imageCoordinates.y);
+    // TODO: Adjust this properly
+    float2 gradient = 4.5h * sobel(inputImage, imageCoordinates.x, imageCoordinates.y);
 
     write_imagef(gradientImage, imageCoordinates, (float4) (gradient, abs(gradient)));
 }
@@ -306,7 +314,7 @@ kernel void interpolateGreen(read_only image2d_t rawImage,
         float gmin = min(min(g_left, g_right), min(g_up, g_down));
         green = clamp(green, min_overshoot * gmin, max_overshoot * gmax);
 
-        write_imagef(greenImage, imageCoordinates, clamp(green, 0.0, 1.0));
+        write_imagef(greenImage, imageCoordinates, green);
     } else {
         // Green pixel locations
         write_imagef(greenImage, imageCoordinates, read_imagef(rawImage, imageCoordinates).x);
@@ -385,7 +393,7 @@ void interpolateRedBluePixel(read_only image2d_t rawImage,
 
     float3 output = red_pixel ? (float3)(c1, green, c2) : (float3)(c2, green, c1);
 
-    write_imagef(rgbImage, imageCoordinates, (float4)(clamp(output, 0.0, 1.0), 0));
+    write_imagef(rgbImage, imageCoordinates, (float4)(output, 0));
 }
 
 kernel void interpolateRedBlue(read_only image2d_t rawImage,
@@ -404,8 +412,8 @@ kernel void interpolateRedBlue(read_only image2d_t rawImage,
     interpolateRedBluePixel(rawImage, greenImage, gradientImage, rgbImage, redVariance, blueVariance, true, imageCoordinates + r);
     interpolateRedBluePixel(rawImage, greenImage, gradientImage, rgbImage, redVariance, blueVariance, false, imageCoordinates + b);
 
-    write_imagef(rgbImage, imageCoordinates + g, (float4)(0, clamp(read_imagef(greenImage, imageCoordinates + g).x, 0.0, 1.0), 0, 0));
-    write_imagef(rgbImage, imageCoordinates + g2, (float4)(0, clamp(read_imagef(greenImage, imageCoordinates + g2).x, 0.0, 1.0), 0, 0));
+    write_imagef(rgbImage, imageCoordinates + g, (float4)(0, read_imagef(greenImage, imageCoordinates + g).x, 0, 0));
+    write_imagef(rgbImage, imageCoordinates + g2, (float4)(0, read_imagef(greenImage, imageCoordinates + g2).x, 0, 0));
 }
 #undef GREEN
 
@@ -1156,13 +1164,12 @@ kernel void denoiseImage(read_only image2d_t inputImage,
     write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, magnitude));
 }
 
-half __attribute__((overloadable)) eigen_match(half8 v, half detail) {
+half __attribute__((overloadable)) length(half8 v) {
     half d1 = dot(v.lo, v.lo);
-    half d2 = dot(v.hi, v.hi);
-
-    half high_detail = smoothstep(0.95h, 1, detail);
-
-    return sqrt(d1 + mix(0, d2, high_detail));
+    // TODO: veryfy that 6 eigenvector components is enough
+    // half d2 = dot(v.hi, v.hi);
+    half d2 = dot(v.hi.lo, v.hi.lo);
+    return sqrt(d1 + d2);
 }
 
 kernel void denoiseImagePatch(read_only image2d_t inputImage,
@@ -1176,16 +1183,26 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
     const half3 inputYCC = read_imageh(inputImage, imageCoordinates).xyz;
     const half8 inputPCA = (half8) read_imageui(pcaImage, imageCoordinates);
 
-    var_a.x = mix(var_b.x / 4, var_a.x, (float) smoothstep(0, 0.05h, inputPCA.x));
     half3 sigma = convert_half3(sqrt(var_a + var_b * inputYCC.x));
+
+    // Low level signal sigma boost
+    half threshold = 0.1;
+    if (inputYCC.x <= threshold) {
+        half3 sigma_001 = convert_half3(sqrt(var_a + var_b * threshold));
+        sigma = sigma_001 * (0.6h + 0.4h * inputYCC.x / threshold);
+    }
+
+    /*
+     TODO: See if it would help to boost the sigma for pure red or blue pixels
+     */
+
     half3 diffMultiplier = 1 / (convert_half3(thresholdMultipliers) * sigma);
 
     half2 gradient = read_imageh(gradientImage, imageCoordinates).xy;
     half magnitude = length(gradient);
     half edge = smoothstep(4, 16, gradientThreshold * magnitude / sigma.x);
-    half detail = smoothstep(1, 4, gradientThreshold * magnitude / sigma.x);
 
-    const int size = 16;
+    const int size = 10;
 
     half3 filtered_pixel = 0;
     half3 kernel_norm = 0;
@@ -1194,7 +1211,7 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
             half3 inputSampleYCC = read_imageh(inputImage, imageCoordinates + (int2)(x, y)).xyz;
             half8 samplePCA = (half8) read_imageui(pcaImage, imageCoordinates + (int2)(x, y));
 
-            half pcaDiff = eigen_match(samplePCA - inputPCA, detail);
+            half pcaDiff = length(samplePCA - inputPCA);
             half lumaWeight = 1 - step(1 + (half) gradientBoost * edge, pcaDiff * diffMultiplier.x);
 
             half3 inputDiff = (inputSampleYCC - inputYCC) * diffMultiplier;

@@ -23,9 +23,14 @@ template <typename T1, typename T2>
 void applyKernel(gls::OpenCLContext* glsContext, const std::string& kernelName, const gls::cl_image_2d<T1>& inputImage,
                  gls::cl_image_2d<T2>* outputImage);
 
-void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_16>& rawImage,
+template <typename pixel_type>
+void scaleRawData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<pixel_type>& rawImage,
                   gls::cl_image_2d<gls::luma_pixel_float>* scaledRawImage, BayerPattern bayerPattern,
                   gls::Vector<4> scaleMul, float blackLevel);
+
+void scaleRgbData(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                  gls::cl_image_2d<gls::rgba_pixel_float>* scaledImage,
+                  gls::Vector<3> scaleMul, float blackLevel);
 
 void rawImageGradient(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::luma_pixel_float>& rawImage,
                       gls::cl_image_2d<gls::luma_alpha_pixel_float>* gradientImage);
