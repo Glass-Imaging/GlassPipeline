@@ -168,7 +168,6 @@
 				E5C5BD9A299C3DB700AAB593 /* SVD.hpp */,
 				E5C5BD9B299C3DB700AAB593 /* ThreadPool.hpp */,
 				E58337EB299C3668007192AD /* GlassImageLib.xcodeproj */,
-				E58337DF299C3637007192AD /* GlassPipelineLib */,
 				E58337DE299C3637007192AD /* Products */,
 				E5C5BDC6299C3F1600AAB593 /* Frameworks */,
 			);
@@ -180,13 +179,6 @@
 				E58337DD299C3637007192AD /* libGlassPipelineLib.dylib */,
 			);
 			name = Products;
-			sourceTree = "<group>";
-		};
-		E58337DF299C3637007192AD /* GlassPipelineLib */ = {
-			isa = PBXGroup;
-			children = (
-			);
-			path = GlassPipelineLib;
 			sourceTree = "<group>";
 		};
 		E58337EC299C3668007192AD /* Products */ = {
