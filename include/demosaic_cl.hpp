@@ -104,6 +104,18 @@ void denoiseImagePatch(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gl
                        const gls::Vector<3> thresholdMultipliers, float chromaBoost, float gradientBoost,
                        float gradientThreshold, gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
 
+void denoiseRAWImagePatch(gls::OpenCLContext* glsContext,
+                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          const std::array<gls::cl_image_2d<std::array<uint32_t, 4>>, 4>& pcaImage,
+                          const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                          gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
+
+void denoiseRAWImagePatch4c(gls::OpenCLContext* glsContext,
+                            const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                            const gls::cl_image_2d<std::array<uint32_t, 4>>& pcaImage,
+                            const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                            gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);
+
 void denoiseImageGuided(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                         const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage);

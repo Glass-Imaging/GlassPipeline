@@ -139,7 +139,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
             auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, imageCPU.width * imageCPU.height);
 
             gls::image<std::array<gls::float16_t, 8>> pca_image(pcaImageCPU.width, pcaImageCPU.height, pcaImageCPU.stride, pca_span);
-            pca(imageCPU, 5, &pca_image);
+            pca(imageCPU, 0, i == 0 ? 3 : 5, &pca_image);
 
             pcaImage.unmapImage(pcaImageCPU);
             layerImage->unmapImage(imageCPU);
@@ -150,7 +150,7 @@ typename PyramidProcessor<levels>::imageType* PyramidProcessor<levels>::denoise(
                               (*denoiseParameters)[i].chromaBoost, (*denoiseParameters)[i].gradientBoost,
                               (*denoiseParameters)[i].gradientThreshold, denoisedImagePyramid[i].get());
 
-            savePatchMap(*(denoisedImagePyramid[i]));
+            // savePatchMap(*(denoisedImagePyramid[i]));
         } else {
             denoiseImage(glsContext, *layerImage, *gradientInput,
                          (*nlfParameters)[i].first, (*nlfParameters)[i].second, thresholdMultipliers[i],

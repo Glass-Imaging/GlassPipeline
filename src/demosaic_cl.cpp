@@ -510,6 +510,66 @@ void denoiseImagePatch(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gl
            gradientThreshold, outputImage->getImage2D());
 }
 
+void denoiseRAWImagePatch4c(gls::OpenCLContext* glsContext,
+                            const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                            const gls::cl_image_2d<std::array<uint32_t, 4>>& pcaImage,
+                            const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                            gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+    // Load the shader source
+    const auto program = glsContext->loadProgram("demosaic");
+
+    // Bind the kernel parameters
+    auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
+                                    cl::Image2D,  // pcaImage
+                                    cl_float4,    // var_a
+                                    cl_float4,    // var_b
+                                    cl::Image2D   // outputImage
+                                    >(program, "denoiseRAWImagePatch4c");
+
+    cl_float4 cl_var_a = { var_a[0], var_a[1], var_a[2], var_a[3] };
+    cl_float4 cl_var_b = { var_b[0], var_b[1], var_b[2], var_b[3] };
+
+    // Schedule the kernel on the GPU
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
+           inputImage.getImage2D(),
+           pcaImage.getImage2D(),
+           cl_var_a, cl_var_b,
+           outputImage->getImage2D());
+}
+
+void denoiseRAWImagePatch(gls::OpenCLContext* glsContext,
+                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          const std::array<gls::cl_image_2d<std::array<uint32_t, 4>>, 4>& pcaImage,
+                          const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                          gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {
+    // Load the shader source
+    const auto program = glsContext->loadProgram("demosaic");
+
+    // Bind the kernel parameters
+    auto kernel = cl::KernelFunctor<cl::Image2D,  // inputImage
+                                    cl::Image2D,  // pcaImageX
+                                    cl::Image2D,  // pcaImageY
+                                    cl::Image2D,  // pcaImageZ
+                                    cl::Image2D,  // pcaImageW
+                                    cl_float4,    // var_a
+                                    cl_float4,    // var_b
+                                    cl::Image2D   // outputImage
+                                    >(program, "denoiseRAWImagePatch");
+
+    cl_float4 cl_var_a = { var_a[0], var_a[1], var_a[2], var_a[3] };
+    cl_float4 cl_var_b = { var_b[0], var_b[1], var_b[2], var_b[3] };
+
+    // Schedule the kernel on the GPU
+    kernel(gls::OpenCLContext::buildEnqueueArgs(outputImage->width, outputImage->height),
+           inputImage.getImage2D(),
+           pcaImage[0].getImage2D(),
+           pcaImage[1].getImage2D(),
+           pcaImage[2].getImage2D(),
+           pcaImage[3].getImage2D(),
+           cl_var_a, cl_var_b,
+           outputImage->getImage2D());
+}
+
 void denoiseImageGuided(gls::OpenCLContext* glsContext, const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
                         const gls::Vector<3>& var_a, const gls::Vector<3>& var_b,
                         gls::cl_image_2d<gls::rgba_pixel_float>* outputImage) {

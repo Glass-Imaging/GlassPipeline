@@ -20,6 +20,8 @@
 #include "gls_logging.h"
 #include "raw_converter.hpp"
 
+#include "PCA.hpp"
+
 static const char* TAG = "DEMOSAIC";
 
 #define PRINT_EXECUTION_TIME true
@@ -77,16 +79,16 @@ void SaveRawChannels(const gls::image<T>& rawImage, float maxVal, const std::str
     rawImage.apply([&chan0, &chan1, &chan2, &chan3, maxVal](const T& p, int x, int y) {
         uint8_t val = 255 * std::sqrt(std::clamp((float)p, 0.0f, maxVal) / maxVal);
 
-        if ((x & 0) == 0 && (y & 0) == 0) {
+        if ((x & 1) == 0 && (y & 1) == 0) {
             chan0[y / 2][x / 2] = val;
         }
-        if ((x & 1) == 0 && (y & 0) == 0) {
+        if ((x & 1) == 1 && (y & 1) == 0) {
             chan1[y / 2][x / 2] = val;
         }
-        if ((x & 0) == 0 && (y & 1) == 0) {
+        if ((x & 1) == 0 && (y & 1) == 1) {
             chan2[y / 2][x / 2] = val;
         }
-        if ((x & 1) == 0 && (y & 1) == 0) {
+        if ((x & 1) == 1 && (y & 1) == 1) {
             chan3[y / 2][x / 2] = val;
         }
     });
@@ -142,6 +144,92 @@ void dumpGradientImage(const gls::cl_image_2d<T>& image) {
     out.write_png_file("/Users/fabio/raw_gradient_sgn_5_fine_" + std::to_string(count++) + ".png");
 }
 
+void SaveRawChannels(const gls::image<gls::rgba_pixel_float>& rawImage, float maxVal, const std::string& basePath) {
+    gls::image<gls::luma_pixel_16> chan0(rawImage.width, rawImage.height);
+    gls::image<gls::luma_pixel_16> chan1(rawImage.width, rawImage.height);
+    gls::image<gls::luma_pixel_16> chan2(rawImage.width, rawImage.height);
+    gls::image<gls::luma_pixel_16> chan3(rawImage.width, rawImage.height);
+
+    rawImage.apply([&](const gls::rgba_pixel_float& p, int x, int y) {
+        // uint8_t val = 255 * std::sqrt(std::clamp(p, 0.0f, maxVal) / maxVal);
+
+        chan0[y][x] = 0xffff * std::clamp((float) p.x, 0.0f, maxVal) / maxVal;
+        chan1[y][x] = 0xffff * std::clamp((float) p.y, 0.0f, maxVal) / maxVal;
+        chan2[y][x] = 0xffff * std::clamp((float) p.z, 0.0f, maxVal) / maxVal;
+        chan3[y][x] = 0xffff * std::clamp((float) p.w, 0.0f, maxVal) / maxVal;
+    });
+    chan0.write_png_file(basePath + "0.png");
+    chan1.write_png_file(basePath + "1.png");
+    chan2.write_png_file(basePath + "2.png");
+    chan3.write_png_file(basePath + "3.png");
+}
+
+void denoiseRawChannels(gls::OpenCLContext* glsContext,
+                        const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                        const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                        gls::cl_image_2d<gls::rgba_pixel_float> *outputImage) {
+    std::array<gls::cl_image_2d<std::array<uint32_t, 4>>, 4> pcaImage = {
+        gls::cl_image_2d<std::array<uint32_t, 4>>(glsContext->clContext(), inputImage.width, inputImage.height),
+        gls::cl_image_2d<std::array<uint32_t, 4>>(glsContext->clContext(), inputImage.width, inputImage.height),
+        gls::cl_image_2d<std::array<uint32_t, 4>>(glsContext->clContext(), inputImage.width, inputImage.height),
+        gls::cl_image_2d<std::array<uint32_t, 4>>(glsContext->clContext(), inputImage.width, inputImage.height)
+    };
+
+    const auto& inputImageCPU = inputImage.mapImage();
+
+    // SaveRawChannels(inputImageCPU, 1.0, "/Users/fabio/rawChannels");
+
+    for (int c = 0; c < 4; c++) {
+        const auto& pcaChannel = pcaImage[c].mapImage();
+
+        auto pca_memory = (std::array<gls::float16_t, 8> *) pcaChannel.pixels().data();
+        auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, pcaChannel.pixels().size());
+
+        gls::image<std::array<gls::float16_t, 8>> pca_image(pcaChannel.width, pcaChannel.height, pcaChannel.stride, pca_span);
+
+        pca(inputImageCPU, /*channel=*/ c, /*patch_size=*/ 5, &pca_image);
+
+        pcaImage[c].unmapImage(pcaChannel);
+    }
+    inputImage.unmapImage(inputImageCPU);
+
+    denoiseRAWImagePatch(glsContext, inputImage, pcaImage, var_a, var_b, outputImage);
+
+//    const auto& outputImageCPU = outputImage->mapImage();
+//    SaveRawChannels(outputImageCPU, 1.0, "/Users/fabio/denoisedRawChannels");
+//    outputImage->unmapImage(outputImageCPU);
+}
+
+void denoiseRawChannels4c(gls::OpenCLContext* glsContext,
+                          const gls::cl_image_2d<gls::rgba_pixel_float>& inputImage,
+                          const gls::Vector<4>& var_a, const gls::Vector<4>& var_b,
+                          gls::cl_image_2d<gls::rgba_pixel_float> *outputImage) {
+    auto pcaImage = gls::cl_image_2d<std::array<uint32_t, 4>>(glsContext->clContext(), inputImage.width, inputImage.height);
+
+    const auto& inputImageCPU = inputImage.mapImage();
+
+//    SaveRawChannels(inputImageCPU, 1.0, "/Users/fabio/rawChannels");
+
+        const auto& pcaChannel = pcaImage.mapImage();
+
+        auto pca_memory = (std::array<gls::float16_t, 8> *) pcaChannel.pixels().data();
+        auto pca_span = std::span((std::array<gls::float16_t, 8>*) pca_memory, pcaChannel.pixels().size());
+
+        gls::image<std::array<gls::float16_t, 8>> pca_image(pcaChannel.width, pcaChannel.height, pcaChannel.stride, pca_span);
+
+        pca4c(inputImageCPU, /*patch_size=*/ 5, &pca_image);
+
+        pcaImage.unmapImage(pcaChannel);
+
+    inputImage.unmapImage(inputImageCPU);
+
+    denoiseRAWImagePatch4c(glsContext, inputImage, pcaImage, var_a, var_b, outputImage);
+
+//    const auto& outputImageCPU = outputImage->mapImage();
+//    SaveRawChannels(outputImageCPU, 1.0, "/Users/fabio/denoisedRawChannels");
+//    outputImage->unmapImage(outputImageCPU);
+}
+
 gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image<gls::luma_pixel_16>& rawImage,
                                                                 DemosaicParameters* demosaicParameters,
                                                                 bool calibrateFromImage) {
@@ -158,6 +246,12 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
 
     scaleRawData(_glsContext, *clRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern,
                  demosaicParameters->scale_mul, demosaicParameters->black_level / 0xffff);
+
+//    {
+//        const auto scaledRawImageCPU = clScaledRawImage->mapImage();
+//        SaveRawChannels(scaledRawImageCPU, 1.0, "/Users/fabio/scaledRaw");
+//        clScaledRawImage->unmapImage(scaledRawImageCPU);
+//    }
 
     rawImageSobel(_glsContext, *clScaledRawImage, clRawSobelImage.get());
     // dumpGradientImage(*clRawSobelImage);
@@ -189,14 +283,22 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
 
         // denoiseRawRGBAImage(_glsContext, *denoisedRgbaRawImage, noiseModel->rawNlf.second, rgbaRawImage.get());
 
+        // denoiseRawChannels(_glsContext, *denoisedRgbaRawImage, noiseModel->rawNlf.first, noiseModel->rawNlf.second, rgbaRawImage.get());
+
         rawRGBAToBayer(_glsContext, *denoisedRgbaRawImage, clScaledRawImage.get(), demosaicParameters->bayerPattern);
     }
+
+//    {
+//        const auto scaledRawImageCPU = clScaledRawImage->mapImage();
+//        SaveRawChannels(scaledRawImageCPU, 1.0, "/Users/fabio/despeckledRaw");
+//        clScaledRawImage->unmapImage(scaledRawImageCPU);
+//    }
 
     gaussianBlurSobelImage(_glsContext, *clScaledRawImage, *clRawSobelImage, rawVariance[1], 1.5, 4.5,
                            clRawGradientImage.get());
     // dumpGradientImage(*clRawGradientImage);
 
-    if (high_noise_image) {
+    if (false && high_noise_image) {
         malvar(_glsContext, *clScaledRawImage, *clRawGradientImage, clLinearRGBImageA.get(),
                demosaicParameters->bayerPattern, rawVariance[0], rawVariance[1], rawVariance[2]);
     } else {
@@ -209,6 +311,19 @@ gls::cl_image_2d<gls::rgba_pixel_float>* RawConverter::demosaic(const gls::image
         interpolateRedBlueAtGreen(_glsContext, *clLinearRGBImageA, *clRawGradientImage, clLinearRGBImageA.get(),
                                   demosaicParameters->bayerPattern, rawVariance[0], rawVariance[2]);
     }
+
+//    const auto demosaicedImageCPU = clLinearRGBImageA->mapImage();
+//    gls::image<gls::rgb_pixel_16> saveImage(clLinearRGBImageA->width, clLinearRGBImageA->height);
+//    saveImage.apply([&](gls::rgb_pixel_16 *p, int x, int y) {
+//        const auto& pp = demosaicedImageCPU[y][x];
+//        *p = {
+//            (uint16_t) (0xffff * std::clamp((float) pp.x, 0.0f, 1.0f)),
+//            (uint16_t) (0xffff * std::clamp((float) pp.y, 0.0f, 1.0f)),
+//            (uint16_t) (0xffff * std::clamp((float) pp.z, 0.0f, 1.0f))
+//        };
+//    });
+//    saveImage.write_png_file("/Users/fabio/demosaiced.png");
+//    clLinearRGBImageA->unmapImage(demosaicedImageCPU);
 
     // Recover clipped highlights
     blendHighlightsImage(_glsContext, *clLinearRGBImageA, /*clip=*/1.0, clLinearRGBImageA.get());

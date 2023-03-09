@@ -150,7 +150,7 @@ kernel void scaleRawData(read_only image2d_t rawImage, write_only image2d_t scal
     for (int c = 0; c < 4; c++) {
         int2 o = bayerOffsets[bayerPattern][c];
         write_imagef(scaledRawImage, imageCoordinates + (int2) (o.x, o.y),
-                     scaleMul[c] * (read_imagef(rawImage, imageCoordinates + (int2) (o.x, o.y)).x - blackLevel));
+                     max((scaleMul[c] * (read_imagef(rawImage, imageCoordinates + (int2) (o.x, o.y)).x - blackLevel)) * 0.9 + 0.1, 0));
     }
 }
 
@@ -313,7 +313,7 @@ kernel void interpolateGreen(read_only image2d_t rawImage,
         float gmin = min(min(g_left, g_right), min(g_up, g_down));
         green = clamp(green, min_overshoot * gmin, max_overshoot * gmax);
 
-        write_imagef(greenImage, imageCoordinates, green);
+        write_imagef(greenImage, imageCoordinates, max(green, 0));
     } else {
         // Green pixel locations
         write_imagef(greenImage, imageCoordinates, read_imagef(rawImage, imageCoordinates).x);
@@ -392,7 +392,7 @@ void interpolateRedBluePixel(read_only image2d_t rawImage,
 
     float3 output = red_pixel ? (float3)(c1, green, c2) : (float3)(c2, green, c1);
 
-    write_imagef(rgbImage, imageCoordinates, (float4)(output, 0));
+    write_imagef(rgbImage, imageCoordinates, (float4)(max(output, 0), 0));
 }
 
 kernel void interpolateRedBlue(read_only image2d_t rawImage,
@@ -496,7 +496,7 @@ void interpolateRedBlueAtGreenPixel(read_only image2d_t rgbImageIn,
     float blue_max = max(max(rgb_left.z, rgb_right.z), max(rgb_up.z, rgb_down.z));
     rgb.z = clamp(blue, blue_min, blue_max);
 
-    write_imagef(rgbImageOut, imageCoordinates, (float4)(rgb, 0));
+    write_imagef(rgbImageOut, imageCoordinates, (float4)(max(rgb, 0), 0));
 }
 
 kernel void interpolateRedBlueAtGreen(read_only image2d_t rgbImageIn,
@@ -1182,12 +1182,12 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
 
     half3 sigma = convert_half3(sqrt(var_a + var_b * inputYCC.x));
 
-    // Low level signal sigma boost
-    half threshold = 0.2;
-    if (inputYCC.x <= threshold) {
-        half3 sigma_001 = convert_half3(sqrt(var_a + var_b * threshold));
-        sigma = sigma_001 * (0.6h + 0.4h * inputYCC.x / threshold);
-    }
+//    // Low level signal sigma boost
+//    half threshold = 0.2;
+//    if (inputYCC.x <= threshold) {
+//        half3 sigma_001 = convert_half3(sqrt(var_a + var_b * threshold));
+//        sigma = sigma_001 * (0.6h + 0.4h * inputYCC.x / threshold);
+//    }
 
     /*
      TODO: See if it would help to boost the sigma for pure red or blue pixels
@@ -1223,6 +1223,88 @@ kernel void denoiseImagePatch(read_only image2d_t inputImage,
     half3 denoisedPixel = filtered_pixel / kernel_norm;
 
     write_imageh(denoisedImage, imageCoordinates, (half4) (denoisedPixel, kernel_norm.x));
+}
+
+kernel void denoiseRAWImagePatch(read_only image2d_t inputImage,
+                                 read_only image2d_t pcaImageW,
+                                 read_only image2d_t pcaImageZ,
+                                 read_only image2d_t pcaImageY,
+                                 read_only image2d_t pcaImageX,
+                                 float4 var_a, float4 var_b,
+                                 write_only image2d_t denoisedImage) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+
+    const float4 inputPixel = read_imagef(inputImage, imageCoordinates);
+    const half8 inputPCAX = (half8) read_imageui(pcaImageX, imageCoordinates);
+    const half8 inputPCAY = (half8) read_imageui(pcaImageY, imageCoordinates);
+    const half8 inputPCAZ = (half8) read_imageui(pcaImageZ, imageCoordinates);
+    const half8 inputPCAW = (half8) read_imageui(pcaImageW, imageCoordinates);
+
+    half4 sigma = convert_half4(sqrt(var_a + var_b * inputPixel));
+
+    const int size = 10;
+
+    half4 filtered_pixel = 0;
+    half4 kernel_norm = 0;
+    for (int y = -size; y <= size; y++) {
+        for (int x = -size; x <= size; x++) {
+            half8 samplePCAX = (half8) read_imageui(pcaImageX, imageCoordinates + (int2)(x, y));
+            half8 samplePCAY = (half8) read_imageui(pcaImageY, imageCoordinates + (int2)(x, y));
+            half8 samplePCAZ = (half8) read_imageui(pcaImageZ, imageCoordinates + (int2)(x, y));
+            half8 samplePCAW = (half8) read_imageui(pcaImageW, imageCoordinates + (int2)(x, y));
+
+            half4 pcaDiff = (half4) (
+                length(samplePCAX - inputPCAX),
+                length(samplePCAY - inputPCAY),
+                length(samplePCAZ - inputPCAZ),
+                length(samplePCAW - inputPCAW)
+            );
+
+            half4 sampleWeight = 1 - step(0.5h * sigma, pcaDiff);
+
+            half4 inputSample = read_imageh(inputImage, imageCoordinates + (int2)(x, y));
+
+            filtered_pixel += sampleWeight * inputSample;
+            kernel_norm += sampleWeight;
+        }
+    }
+    half4 denoisedPixel = filtered_pixel / kernel_norm;
+
+    write_imageh(denoisedImage, imageCoordinates, denoisedPixel);
+}
+
+kernel void denoiseRAWImagePatch4c(read_only image2d_t inputImage,
+                                   read_only image2d_t pcaImage,
+                                   float4 var_a, float4 var_b,
+                                   write_only image2d_t denoisedImage) {
+    const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
+
+    const float4 inputPixel = read_imagef(inputImage, imageCoordinates);
+    const half8 inputPCA = (half8) read_imageui(pcaImage, imageCoordinates);
+
+    half4 sigma = convert_half4(sqrt(var_a + var_b * inputPixel));
+
+    const int size = 10;
+
+    half4 filtered_pixel = 0;
+    half4 kernel_norm = 0;
+    for (int y = -size; y <= size; y++) {
+        for (int x = -size; x <= size; x++) {
+            half8 samplePCA = (half8) read_imageui(pcaImage, imageCoordinates + (int2)(x, y));
+
+            half pcaDiff = length(samplePCA - inputPCA);
+
+            half sampleWeight = 1 - step(sigma.x, pcaDiff);
+
+            half4 inputSample = read_imageh(inputImage, imageCoordinates + (int2)(x, y));
+
+            filtered_pixel += sampleWeight * inputSample;
+            kernel_norm += sampleWeight;
+        }
+    }
+    half4 denoisedPixel = filtered_pixel / kernel_norm;
+
+    write_imageh(denoisedImage, imageCoordinates, denoisedPixel);
 }
 
 typedef struct transform {
@@ -1425,7 +1507,7 @@ kernel void subtractNoiseImage(read_only image2d_t inputImage, read_only image2d
 
     // Sharpen all components
     denoisedPixel = mix(inputPixelDenoised1, denoisedPixel, sharpening);
-//    denoisedPixel.x = max(denoisedPixel.x, 0.0);
+    denoisedPixel.x = max(denoisedPixel.x, 0.0);
 
     write_imagef(outputImage, output_pos, (float4) (denoisedPixel, inputPixel.w));
 }
@@ -2198,7 +2280,7 @@ kernel void convertTosRGB(read_only image2d_t linearImage, read_only image2d_t l
                           Matrix3x3 transform, RGBConversionParameters parameters) {
     const int2 imageCoordinates = (int2) (get_global_id(0), get_global_id(1));
 
-    float3 pixel_value = read_imagef(linearImage, imageCoordinates).xyz;
+    float3 pixel_value = (read_imagef(linearImage, imageCoordinates).xyz - 0.1) / 0.9;
 
     // Exposure Bias
     pixel_value *= parameters.exposureBias != 0 ? powr(2.0, parameters.exposureBias) : 1;
